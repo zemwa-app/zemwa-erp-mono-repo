@@ -1,0 +1,31 @@
+{
+    "name": "nwidart/landingpagepro",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\LandingPagePro\\": "",
+            "Modules\\LandingPagePro\\App\\": "app/",
+            "Modules\\LandingPagePro\\Database\\Factories\\": "database/factories/",
+            "Modules\\LandingPagePro\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\LandingPagePro\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "name": "ProBundle",
+    "alias": "probundle",
+    "description": "Custom Pro Bundle containing landing page builder, LMS, multi lead forms, and public assessment.",
+    "keywords": [],
+    "active": 1,
+    "order": 3,
+    "providers": [
+        "Modules\\ProBundle\\Providers\\ProBundleServiceProvider"
+    ],
+    "aliases": {},
+    "files": [
+        "start.php"
+    ],
+    "permissions": [],
+    "roles_permissions": {
+        "admin": [],
+        "manager": []
+    }
+}

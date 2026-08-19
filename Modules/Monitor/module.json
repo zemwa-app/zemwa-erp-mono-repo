@@ -1,0 +1,12 @@
+{
+    "name": "Monitor",
+    "alias": "monitor",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Monitor\\Providers\\MonitorServiceProvider",
+        "Modules\\Monitor\\Providers\\EventServiceProvider"
+    ],
+    "files": []
+}

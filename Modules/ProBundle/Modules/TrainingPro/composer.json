@@ -1,0 +1,31 @@
+{
+    "name": "nwidart/trainingpro",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\TrainingPro\\": "",
+            "Modules\\TrainingPro\\App\\": "app/",
+            "Modules\\TrainingPro\\Database\\Factories\\": "database/factories/",
+            "Modules\\TrainingPro\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\TrainingPro\\Tests\\": "tests/"
+        }
+    }
+}

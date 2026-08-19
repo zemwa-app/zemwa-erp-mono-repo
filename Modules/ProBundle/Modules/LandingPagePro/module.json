@@ -1,0 +1,12 @@
+{
+    "name": "LandingPagePro",
+    "alias": "landingpagepro",
+    "description": "Create Landing Page using inbuilt templates",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\LandingPagePro\\Providers\\LandingPageProServiceProvider"
+    ],
+    "files": [],
+    "version": "2.0.0"
+}

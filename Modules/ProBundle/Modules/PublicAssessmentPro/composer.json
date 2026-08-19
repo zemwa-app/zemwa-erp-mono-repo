@@ -1,0 +1,31 @@
+{
+    "name": "nwidart/publicassessmentpro",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\PublicAssessmentPro\\": "",
+            "Modules\\PublicAssessmentPro\\App\\": "app/",
+            "Modules\\PublicAssessmentPro\\Database\\Factories\\": "database/factories/",
+            "Modules\\PublicAssessmentPro\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\PublicAssessmentPro\\Tests\\": "tests/"
+        }
+    }
+}

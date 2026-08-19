@@ -1,0 +1,31 @@
+{
+    "name": "nwidart/policycentre",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\PolicyCentre\\": "",
+            "Modules\\PolicyCentre\\App\\": "app/",
+            "Modules\\PolicyCentre\\Database\\Factories\\": "database/factories/",
+            "Modules\\PolicyCentre\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\PolicyCentre\\Tests\\": "tests/"
+        }
+    }
+}

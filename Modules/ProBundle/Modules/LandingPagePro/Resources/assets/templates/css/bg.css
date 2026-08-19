@@ -1,0 +1,25 @@
+.banner-bg-3 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner3.jpg') }}"); }
+.banner-bg-4 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner4.jpg') }}"); }
+.banner-bg-5 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner5.jpg') }}"); }
+.banner-bg-6 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner6.jpg') }}"); }
+.banner-bg-7 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner7.jpg') }}"); }
+.banner-bg-8 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner8.jpg') }}"); }
+.banner-bg-9 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner9.jpg') }}"); }
+.banner-bg-10 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner10.jpg') }}"); }
+.banner-bg-12 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner12.jpg') }}"); }
+.banner-bg-11 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/banner11.jpg') }}"); background-attachment: fixed; }
+.section-getapp-st-1 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/getappbg.jpg') }}"); }
+.section-product-st-2 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/productbg.jpg') }}"); }
+.section-calout-st-1 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/callout1.jpg') }}"); }
+.section-package,
+.section-package-st-3 { background-image: url("{{ Module::asset('landingpagepro:templates/img/package-bg.jpg') }}"); }
+.section-package-st-2 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/packagebg.jpg') }}"); }
+.section-partners-st-6 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/partnerbg.jpg') }}"); }
+.section-subscribe-st-4 { background-image: url("{{ Module::asset('landingpagepro:templates/img/banner/polygon.jpg') }}"); }
+.get-product-bg-1 { background: url("{{ Module::asset('landingpagepro:templates/img/get-product-bg1.jpg') }}"); }
+.section-video-st-1 { background: url("{{ Module::asset('landingpagepro:templates/img/why-choose-bg.jpg') }}"); }
+.section-package-st-3 { background-image: url("{{ Module::asset('landingpagepro:templates/img/package-bg2.jpg') }}"); }
+.section-delivery .icon1 { background: url("{{ Module::asset('landingpagepro:templates/img/icons/rocket.png') }}") no-repeat 50px center; padding-left: 112px; }
+.section-delivery .icon2 { background: url("{{ Module::asset('landingpagepro:templates/img/icons/clock.png') }}") no-repeat 20px center; }
+.section-delivery .icon3 { background: url("{{ Module::asset('landingpagepro:templates/img/icons/arrow.png') }}") no-repeat 20px center; }
+

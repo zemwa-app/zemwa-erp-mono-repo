@@ -1,0 +1,12 @@
+{
+    "name": "TrainingPro",
+    "alias": "trainingpro",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\TrainingPro\\Providers\\TrainingProServiceProvider"
+    ],
+    "files": [],
+    "version": "2.0.0"
+}

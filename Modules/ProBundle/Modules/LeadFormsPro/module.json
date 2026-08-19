@@ -1,0 +1,12 @@
+{
+    "name": "LeadFormsPro",
+    "alias": "leadformspro",
+    "description": "Enables user to create multiple lead forms.",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\LeadFormsPro\\Providers\\LeadFormsProServiceProvider"
+    ],
+    "files": [],
+    "version": "2.0.0"
+}

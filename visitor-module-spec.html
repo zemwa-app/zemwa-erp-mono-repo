@@ -1,0 +1,2110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Visitor Module — UI/UX Spec (Worksuite admin theme)</title>
+<!-- Same core stack as resources/views/layouts/app.blade.php — open this file from the project root so public/ resolves -->
+<link rel="stylesheet" href="public/vendor/css/all.min.css">
+<link rel="stylesheet" href="public/vendor/css/simple-line-icons.css">
+<link rel="stylesheet" href="public/vendor/css/bootstrap-icons.css">
+<link rel="stylesheet" href="public/css/main.css">
+<style>
+  /* sections/theme_css.blade.php + app.blade.php :root (calendar) */
+  :root {
+    --header_color: #171f29;
+    --fc-border-color: #E8EEF3;
+    --fc-button-text-color: #99A5B5;
+    --fc-button-border-color: #99A5B5;
+    --fc-button-bg-color: #ffffff;
+    --fc-button-active-bg-color: #171f29;
+    --fc-today-bg-color: #f2f4f7;
+  }
+</style>
+<style>
+  /* Spec layout overrides — tokens aligned with public/css/main.css utilities */
+  :root {
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --header_color: #171f29;
+    --accent: var(--header_color);
+    --accent-light: #f2f4f7;
+    --accent-dark: #0d1218;
+    --bg: #f2f4f7;
+    --surface: #ffffff;
+    --surface2: #f2f4f7;
+    --border: #e8eef3;
+    --border-strong: #ced4da;
+    --text: #212529;
+    --text-muted: #616e80;
+    --text-faint: #99a5b5;
+    --green: #1d9e75;
+    --green-bg: #e8f7f1;
+    --red: #e24b4a;
+    --red-bg: #fcebeb;
+    --amber: #c27c1a;
+    --amber-bg: #faf4e8;
+    --blue: #2c6b9e;
+    --blue-bg: #e8f2fa;
+    --mono: var(--font-mono);
+    --radius: 0.25rem;
+    --radius-lg: 0.35rem;
+    --shadow: 0 1px 2px rgba(23, 31, 41, 0.06);
+    --focus-ring: rgba(23, 31, 41, 0.12);
+  }
+
+  .visitor-spec-doc,
+  .visitor-spec-doc * { box-sizing: border-box; }
+
+  .visitor-spec-doc {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+    padding-bottom: 48px;
+    box-shadow: 1px 0 0 rgba(23, 31, 41, 0.04);
+  }
+
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 12px;
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600; font-size: 15px; color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .sidebar-logo i { color: var(--header_color); font-size: 18px; width: 22px; text-align: center; }
+
+  .sidebar-section { padding: 12px 0 6px; }
+
+  .sidebar-section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--text-faint);
+    padding: 0 18px 8px;
+  }
+
+  .sidebar-link {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+
+  .sidebar-link:hover { background: var(--surface2); color: var(--text); }
+
+  .sidebar-link.active {
+    background: var(--surface2);
+    color: var(--header_color);
+    font-weight: 600;
+    border-left-color: var(--header_color);
+  }
+
+  .sidebar-link .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    flex-shrink: 0;
+  }
+
+  .sidebar-link.active .dot { background: var(--header_color); }
+
+  .main {
+    margin-left: 260px;
+    flex: 1;
+    min-width: 0;
+    background: var(--bg);
+  }
+
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 28px;
+    box-shadow: 0 1px 0 rgba(23, 31, 41, 0.04);
+  }
+
+  .topbar-title { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+  .topbar-title strong { color: var(--text); font-weight: 600; }
+
+  .topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 0.25rem;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+
+  .badge-purple { background: var(--accent-light); color: var(--header_color); border-color: var(--border); }
+  .badge-green  { background: var(--green-bg); color: var(--green); }
+  .badge-red    { background: var(--red-bg); color: var(--red); }
+  .badge-amber  { background: var(--amber-bg); color: var(--amber); }
+  .badge-blue   { background: var(--blue-bg); color: var(--blue); }
+  .badge-gray   { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .content {
+    padding: 24px 28px 40px;
+    max-width: 1200px;
+  }
+
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    overflow: hidden;
+    scroll-margin-top: 72px;
+  }
+
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .section-head:hover { background: var(--surface2); }
+
+  .section-head-left { display: flex; align-items: center; gap: 12px; }
+
+  .section-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--radius);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--header_color);
+  }
+
+  .section-icon svg { stroke: currentColor; }
+
+  .section-title { font-weight: 600; font-size: 15px; color: var(--text); }
+  .section-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
+
+  .section-toggle {
+    font-size: 12px; color: var(--text-muted);
+    transition: transform 0.2s;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .section-toggle.open { transform: rotate(180deg); }
+
+  .section-body { padding: 20px; display: none; background: var(--surface); }
+  .section-body.open { display: block; }
+
+  .spec-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .spec-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+
+  .spec-box-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .spec-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+  .spec-box p:last-child { margin-bottom: 0; }
+  .spec-box strong { color: var(--text); font-weight: 600; }
+
+  .wireframe {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    font-size: 12px;
+    font-family: var(--mono);
+    background: var(--surface);
+    margin-bottom: 16px;
+  }
+
+  .wireframe-bar {
+    background: var(--surface2);
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .wireframe-body { padding: 14px; background: var(--bg); }
+
+  .wf-topbar {
+    background: var(--surface);
+    color: var(--text);
+    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: var(--radius) var(--radius) 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    font-family: var(--font-sans);
+  }
+
+  .wf-topbar span:first-child { color: var(--text); }
+
+  .wf-row { display: flex; gap: 10px; margin-bottom: 8px; }
+
+  .wf-stat {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    font-family: inherit;
+    box-shadow: var(--shadow);
+  }
+
+  .wf-stat-num { font-size: 20px; font-weight: 700; color: var(--header_color); font-family: var(--font-sans); }
+  .wf-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+  .wf-table { width: 100%; border-collapse: collapse; font-family: inherit; background: var(--surface); }
+  .wf-table th { background: var(--surface2); padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .wf-table td { padding: 10px 12px; font-size: 12px; border-bottom: 1px solid var(--border); color: var(--text); }
+  .wf-table tr:last-child td { border-bottom: none; }
+  .wf-table tr:hover td { background: #fafbfc; }
+
+  .wf-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .wf-card-head {
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; font-weight: 600;
+    display: flex; justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-sans);
+    color: var(--text);
+  }
+
+  .wf-card-body { padding: 12px 14px; font-family: inherit; }
+
+  .wf-stepper {
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-sans);
+    font-size: 11px;
+  }
+
+  .wf-step {
+    display: flex; align-items: center; gap: 4px;
+    padding: 5px 12px; border-radius: 0.25rem;
+    font-weight: 600;
+  }
+
+  .wf-step.active { background: var(--header_color); color: #fff; }
+  .wf-step.done   { background: var(--green-bg); color: var(--green); }
+  .wf-step.future { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
+  .wf-step-sep    { color: var(--text-faint); font-size: 11px; }
+
+  .timeline { font-family: inherit; }
+  .tl-item {
+    display: flex; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    font-size: 12px;
+  }
+  .tl-item:last-child { border-bottom: none; }
+  .tl-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 4px;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+  .tl-dot.purple { background: var(--header_color); box-shadow: 0 0 0 1px var(--header_color); }
+  .tl-dot.green  { background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+  .tl-dot.amber  { background: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .tl-dot.blue   { background: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+  .tl-dot.gray   { background: var(--text-faint); box-shadow: 0 0 0 1px var(--text-faint); }
+  .tl-main { font-weight: 600; color: var(--text); }
+  .tl-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
+  .tl-time { font-size: 11px; color: var(--text-faint); margin-left: auto; white-space: nowrap; padding-left: 10px; }
+
+  .status-pipeline {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; margin-bottom: 12px;
+    font-family: inherit;
+  }
+  .sp-step {
+    padding: 5px 12px; border-radius: 0.25rem; font-size: 11px; font-weight: 600;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    background: var(--surface);
+  }
+  .sp-step.current { background: var(--header_color); color: #fff; border-color: var(--header_color); }
+  .sp-step.done    { background: var(--green-bg); color: var(--green); border-color: transparent; }
+  .sp-sep { color: var(--text-faint); font-size: 11px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-field { margin-bottom: 12px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px; }
+  .form-input {
+    width: 100%; padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 0.25rem; font-size: 13px;
+    background: var(--surface); color: var(--text);
+    outline: none; transition: border 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  .form-input:focus { border-color: var(--header_color); box-shadow: 0 0 0 3px var(--focus-ring); }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2399a5b5' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .form-helper { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+
+  .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    padding: 6px 14px; border-radius: 0.25rem; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border-strong); cursor: pointer;
+    background: var(--surface); color: var(--text-muted);
+    transition: all 0.15s; font-family: inherit;
+  }
+  .pill:hover { border-color: var(--header_color); color: var(--header_color); }
+  .pill.selected { background: var(--header_color); color: #fff; border-color: var(--header_color); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 0.25rem; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border-strong);
+    background: var(--surface); color: var(--text);
+    transition: all 0.15s; text-decoration: none; font-family: inherit;
+  }
+  .btn:hover { background: var(--surface2); border-color: var(--border-strong); }
+  /* Match sections/theme_css.blade.php .btn-primary overrides over Bootstrap (main.css) */
+  .visitor-spec-doc .btn-primary,
+  .visitor-spec-doc .btn-primary:disabled:hover,
+  .visitor-spec-doc .btn-primary.disabled:hover {
+    background-color: var(--header_color) !important;
+    border: 1px solid var(--header_color) !important;
+    color: #fff !important;
+  }
+  .visitor-spec-doc .btn-primary:hover {
+    background-color: var(--accent-dark) !important;
+    border-color: var(--accent-dark) !important;
+    color: #fff !important;
+  }
+  .btn-sm { padding: 5px 12px; font-size: 11px; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .sla-bar-wrap { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin: 6px 0; border: 1px solid var(--border); }
+  .sla-bar-fill { height: 100%; border-radius: 2px; background: var(--header_color); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+  .stat-num  { font-size: 24px; font-weight: 700; line-height: 1; color: var(--text); }
+  .stat-lbl  { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-sub  { font-size: 12px; margin-top: 6px; font-weight: 500; }
+  .up   { color: var(--green); }
+  .down { color: var(--red); }
+
+  .notif-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-icon {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--surface2); color: var(--header_color);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+  .avatar-lg { width: 44px; height: 44px; font-size: 14px; }
+
+  .two-col { display: grid; grid-template-columns: 1.65fr 1fr; gap: 16px; }
+
+  .info-table { width: 100%; font-size: 12px; }
+  .info-table tr { border-bottom: 1px solid var(--border); }
+  .info-table tr:last-child { border-bottom: none; }
+  .info-table td { padding: 8px 0; }
+  .info-table td:first-child { color: var(--text-muted); width: 120px; font-weight: 500; }
+  .info-table td:last-child { font-weight: 600; text-align: right; color: var(--text); }
+
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .flow-node {
+    padding: 6px 12px; border-radius: 0.25rem; font-size: 12px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .flow-node.purple { background: var(--surface2); color: var(--header_color); border-color: var(--header_color); }
+  .flow-node.green  { background: var(--green-bg); color: var(--green); border-color: rgba(29, 158, 117, 0.35); }
+  .flow-node.amber  { background: var(--amber-bg); color: var(--amber); border-color: rgba(194, 124, 26, 0.35); }
+  .flow-node.blue   { background: var(--blue-bg); color: var(--blue); border-color: rgba(44, 107, 158, 0.35); }
+  .flow-node.red    { background: var(--red-bg); color: var(--red); border-color: rgba(226, 75, 74, 0.35); }
+  .flow-node.start  { border-radius: 0.25rem; background: var(--header_color); color: #fff; border-color: var(--header_color); }
+  .flow-arr { color: var(--text-faint); font-size: 13px; }
+
+  .token { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--header_color); letter-spacing: 0.04em; }
+
+  .mvp-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .mvp-table th { background: var(--surface2); padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .mvp-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text-muted); }
+  .mvp-table tr:last-child td { border-bottom: none; }
+
+  pre {
+    background: #1b2430;
+    color: #e2e8f0;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    line-height: 1.65;
+    margin: 10px 0;
+    border: 1px solid var(--border);
+  }
+  pre .kw  { color: #7dd3fc; }
+  pre .str { color: #86efac; }
+  pre .cmt { color: #94a3b8; font-style: italic; }
+  pre .fn  { color: #fcd34d; }
+
+  .chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip {
+    padding: 4px 10px; border-radius: 0.25rem; font-size: 11px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+    position: sticky; top: 60px; z-index: 40;
+  }
+
+  .toc-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+
+  .toc-links { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .toc-link {
+    padding: 6px 12px; border-radius: 0.25rem; font-size: 12px; font-weight: 600;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text-muted); text-decoration: none;
+    transition: all 0.15s;
+  }
+  .toc-link:hover { background: var(--surface); color: var(--header_color); border-color: var(--header_color); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+  .callout {
+    background: var(--surface2);
+    border-left: 4px solid var(--header_color);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-left-width: 4px;
+  }
+
+  .warning-box {
+    background: var(--amber-bg);
+    border-left: 4px solid var(--amber);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+    border-left-width: 4px;
+  }
+
+  h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; margin-top: 6px; }
+  h4 { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+  p  { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.65; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  li { font-size: 13px; color: var(--text-muted); padding: 3px 0; }
+  li strong { color: var(--text); font-weight: 600; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); width: 240px; }
+    .main { margin-left: 0; }
+    .spec-grid, .two-col, .form-row, .stat-row { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+
+</style>
+</head>
+<body class="visitor-spec-doc">
+<div class="layout">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <i class="fas fa-id-card" aria-hidden="true"></i>
+    <span>Visitor <span style="font-weight:500;color:var(--text-muted)">Module spec</span></span>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <a class="sidebar-link active" href="#architecture">
+      <div class="dot"></div> Module architecture
+    </a>
+    <a class="sidebar-link" href="#ia">
+      <div class="dot"></div> Navigation & IA
+    </a>
+    <a class="sidebar-link" href="#roles">
+      <div class="dot"></div> Role permissions
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Screens</div>
+    <a class="sidebar-link" href="#dashboard">
+      <div class="dot"></div> Dashboard
+    </a>
+    <a class="sidebar-link" href="#visitor-list">
+      <div class="dot"></div> Visitor list
+    </a>
+    <a class="sidebar-link" href="#visitor-profile">
+      <div class="dot"></div> Visitor profile
+    </a>
+    <a class="sidebar-link" href="#checkin">
+      <div class="dot"></div> Check-in / Check-out
+    </a>
+    <a class="sidebar-link" href="#prereg">
+      <div class="dot"></div> Pre-registration
+    </a>
+    <a class="sidebar-link" href="#vip">
+      <div class="dot"></div> VIP guests
+    </a>
+    <a class="sidebar-link" href="#complaint-list">
+      <div class="dot"></div> Complaint list
+    </a>
+    <a class="sidebar-link" href="#complaint-detail">
+      <div class="dot"></div> Complaint detail
+    </a>
+    <a class="sidebar-link" href="#complaint-create">
+      <div class="dot"></div> Complaint create/edit
+    </a>
+    <a class="sidebar-link" href="#feedback">
+      <div class="dot"></div> Feedback & review
+    </a>
+    <a class="sidebar-link" href="#notifications">
+      <div class="dot"></div> Notification log
+    </a>
+    <a class="sidebar-link" href="#reports">
+      <div class="dot"></div> Reports & export
+    </a>
+    <a class="sidebar-link" href="#settings">
+      <div class="dot"></div> Settings
+    </a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Flows & Dev</div>
+    <a class="sidebar-link" href="#ux-flows">
+      <div class="dot"></div> UX flows
+    </a>
+    <a class="sidebar-link" href="#components">
+      <div class="dot"></div> Component inventory
+    </a>
+    <a class="sidebar-link" href="#tokens">
+      <div class="dot"></div> Design tokens
+    </a>
+    <a class="sidebar-link" href="#devnotes">
+      <div class="dot"></div> Developer handoff
+    </a>
+    <a class="sidebar-link" href="#mvp">
+      <div class="dot"></div> MVP vs Phase 2
+    </a>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <div class="topbar">
+    <div class="topbar-title">Worksuite SaaS &nbsp;/&nbsp; <strong>Visitor Module — Full UI/UX Spec</strong></div>
+    <div class="topbar-right">
+      <span class="badge badge-purple">v1.0 · Design Spec</span>
+      <span class="badge badge-green">14 screens</span>
+      <span class="badge badge-gray">Multi-tenant SaaS</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- TOC -->
+    <div class="toc">
+      <div class="toc-title">Quick navigation</div>
+      <div class="toc-links">
+        <a class="toc-link" href="#architecture">Architecture</a>
+        <a class="toc-link" href="#ia">Navigation IA</a>
+        <a class="toc-link" href="#roles">Roles</a>
+        <a class="toc-link" href="#dashboard">Dashboard</a>
+        <a class="toc-link" href="#visitor-list">Visitor list</a>
+        <a class="toc-link" href="#visitor-profile">Profile</a>
+        <a class="toc-link" href="#checkin">Check-in/out</a>
+        <a class="toc-link" href="#prereg">Pre-registration</a>
+        <a class="toc-link" href="#vip">VIP</a>
+        <a class="toc-link" href="#complaint-list">Complaints</a>
+        <a class="toc-link" href="#complaint-detail">Complaint detail</a>
+        <a class="toc-link" href="#complaint-create">New complaint</a>
+        <a class="toc-link" href="#feedback">Feedback</a>
+        <a class="toc-link" href="#notifications">Notifications</a>
+        <a class="toc-link" href="#reports">Reports</a>
+        <a class="toc-link" href="#settings">Settings</a>
+        <a class="toc-link" href="#ux-flows">UX Flows</a>
+        <a class="toc-link" href="#components">Components</a>
+        <a class="toc-link" href="#tokens">Tokens</a>
+        <a class="toc-link" href="#devnotes">Dev handoff</a>
+        <a class="toc-link" href="#mvp">MVP plan</a>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ ARCHITECTURE ══════════════════════════════ -->
+    <div class="section" id="architecture">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <div>
+            <div class="section-title">A. Module Architecture & Sitemap</div>
+            <div class="section-subtitle">Full page hierarchy, route structure, grouping</div>
+          </div>
+        </div>
+        <div class="section-toggle open">▾</div>
+      </div>
+      <div class="section-body open">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Module groups</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+              <div><span class="badge badge-purple" style="margin-right:6px">Visitors</span> Dashboard, List, Profile, Check-in/out, New entry</div>
+              <div><span class="badge badge-blue" style="margin-right:6px">Pre-reg</span> Pre-registration list, Create/edit, VIP guests</div>
+              <div><span class="badge badge-red" style="margin-right:6px">Complaints</span> List, Detail + timeline, Create/edit, Notification log</div>
+              <div><span class="badge badge-amber" style="margin-right:6px">Feedback</span> Feedback list, Review detail</div>
+              <div><span class="badge badge-gray" style="margin-right:6px">Admin</span> Reports + export, Settings</div>
+            </div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Sidebar placement</div>
+            <p>Positioned after the <strong>HR group</strong>, before <strong>Reports</strong> in the global sidebar accordion.</p>
+            <p>Icon: <code>person-badge</code> (or <code>user-check</code>). Permission gate: <code>visitor_access</code>. Entire group hidden if role lacks this permission.</p>
+            <p>Expandable accordion with 5 sub-groups listed above. Active section auto-expands on load.</p>
+          </div>
+        </div>
+
+        <h3>Route Map</h3>
+        <pre><span class="kw">GET</span>  <span class="str">/visitor</span>                      <span class="cmt">→ Dashboard</span>
+<span class="kw">GET</span>  <span class="str">/visitor/visitors</span>             <span class="cmt">→ Visitor list</span>
+<span class="kw">GET</span>  <span class="str">/visitor/visitors/{id}</span>        <span class="cmt">→ Visitor profile</span>
+<span class="kw">GET</span>  <span class="str">/visitor/visitors/create</span>      <span class="cmt">→ New entry (4-step stepper)</span>
+<span class="kw">GET</span>  <span class="str">/visitor/checkin</span>              <span class="cmt">→ Check-in desk (kiosk-friendly)</span>
+<span class="kw">GET</span>  <span class="str">/visitor/preregistration</span>      <span class="cmt">→ Pre-reg list</span>
+<span class="kw">GET</span>  <span class="str">/visitor/preregistration/create</span><span class="cmt"> → New pre-registration</span>
+<span class="kw">GET</span>  <span class="str">/visitor/vip</span>                  <span class="cmt">→ VIP guest management</span>
+<span class="kw">GET</span>  <span class="str">/visitor/complaints</span>           <span class="cmt">→ Complaint list</span>
+<span class="kw">GET</span>  <span class="str">/visitor/complaints/{id}</span>      <span class="cmt">→ Complaint detail + timeline</span>
+<span class="kw">GET</span>  <span class="str">/visitor/complaints/create</span>    <span class="cmt">→ New complaint</span>
+<span class="kw">GET</span>  <span class="str">/visitor/feedback</span>             <span class="cmt">→ Feedback list + detail</span>
+<span class="kw">GET</span>  <span class="str">/visitor/notifications</span>        <span class="cmt">→ Notification log</span>
+<span class="kw">GET</span>  <span class="str">/visitor/reports</span>              <span class="cmt">→ Reports + export</span>
+<span class="kw">GET</span>  <span class="str">/visitor/settings</span>             <span class="cmt">→ Settings (admin gate)</span></pre>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ IA ══════════════════════════════ -->
+    <div class="section" id="ia">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg></div>
+          <div>
+            <div class="section-title">Navigation & Information Architecture</div>
+            <div class="section-subtitle">Submenu structure, breadcrumbs, page hierarchy</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="callout">The sidebar accordion <strong>Visitor</strong> expands to show 5 sub-groups. Each sub-group collapses individually. Breadcrumbs appear in the topbar for depth-3+ pages (e.g. Complaints / C-0091 / Edit).</div>
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Sidebar accordion structure</div>
+            <pre style="margin:0;font-size:11px;background:var(--surface);border:1px solid var(--border);color:var(--text);">
+👤 Visitor
+  ├─ Dashboard
+  ├─ Visitors
+  │    ├─ All visitors
+  │    └─ Check-in desk
+  ├─ Pre-registration
+  │    ├─ All pre-registrations
+  │    └─ VIP guests
+  ├─ Complaints
+  │    ├─ All complaints
+  │    └─ Notification log
+  ├─ Feedback
+  └─ Reports & Settings (admin)</pre>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Breadcrumb examples</div>
+            <p style="font-size:12px;font-family:var(--mono);color:var(--text-muted)">Visitor / Complaints / <strong style="color:var(--text)">#C-0091</strong></p>
+            <p style="font-size:12px;font-family:var(--mono);color:var(--text-muted)">Visitor / Visitors / <strong style="color:var(--text)">Ramesh Kumar</strong></p>
+            <p style="font-size:12px;font-family:var(--mono);color:var(--text-muted)">Visitor / Pre-registration / <strong style="color:var(--text)">New</strong></p>
+            <hr/>
+            <p><strong>Page titles</strong> follow Worksuite convention: <code>[Module] — [Page name]</code> in <code>&lt;title&gt;</code>. H1 heading inside content area.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ ROLES ══════════════════════════════ -->
+    <div class="section" id="roles">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 11l2 2 4-4"/></svg></div>
+          <div>
+            <div class="section-title">Role-Based Access Matrix</div>
+            <div class="section-subtitle">Permission gates per role and section</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <table class="mvp-table">
+          <thead><tr><th>Role</th><th>Dashboard</th><th>Check-in/out</th><th>Complaints</th><th>Reports</th><th>Settings</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Receptionist</strong></td><td><span class="badge badge-green">View</span></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-blue">Create only</span></td><td>—</td><td>—</td></tr>
+            <tr><td><strong>Helpdesk</strong></td><td><span class="badge badge-green">View</span></td><td><span class="badge badge-gray">Read-only</span></td><td><span class="badge badge-purple">Assign + update</span></td><td><span class="badge badge-blue">Own dept</span></td><td>—</td></tr>
+            <tr><td><strong>Dept. staff</strong></td><td><span class="badge badge-blue">Own dept</span></td><td>—</td><td><span class="badge badge-amber">Assigned only</span></td><td>—</td><td>—</td></tr>
+            <tr><td><strong>Admin</strong></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-green">Full</span></td></tr>
+            <tr><td><strong>Super admin</strong></td><td><span class="badge badge-green">All tenants</span></td><td><span class="badge badge-green">Full</span></td><td><span class="badge badge-green">Full + escalate</span></td><td><span class="badge badge-green">Cross-tenant</span></td><td><span class="badge badge-green">Full</span></td></tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:12px">Permissions are managed via <strong>Spatie Laravel-Permission</strong>. Gate names: <code>visitor_view_dashboard</code>, <code>visitor_manage_checkin</code>, <code>visitor_manage_complaints</code>, <code>visitor_assign_complaints</code>, <code>visitor_view_reports</code>, <code>visitor_export_reports</code>, <code>visitor_manage_settings</code></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ DASHBOARD ══════════════════════════════ -->
+    <div class="section" id="dashboard">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="9" rx="1"/><rect x="14" y="14" width="7" height="9" rx="1"/></svg></div>
+          <div>
+            <div class="section-title">Screen 1 — Visitor Dashboard</div>
+            <div class="section-subtitle">Real-time operational overview for reception shift</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Purpose & roles</div>
+            <p><strong>Purpose:</strong> First thing a receptionist sees at shift start. Shows today's footfall, live check-ins, complaint status and activity feed.</p>
+            <p><strong>Primary roles:</strong> Receptionist, Helpdesk, Admin</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Components used</div>
+            <div class="chip-list">
+              <span class="chip">Stat cards ×4</span><span class="chip">Datatable</span><span class="chip">Activity feed</span><span class="chip">Status badge</span><span class="chip">Mini progress bars</span><span class="chip">CTA buttons</span><span class="chip">Date filter select</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="wireframe">
+          <div class="wireframe-bar">Wireframe — Visitor Dashboard</div>
+          <div class="wireframe-body">
+            <div class="wf-topbar">
+              <span>👤 Visitor dashboard</span>
+              <div style="display:flex;gap:8px"><span class="badge badge-gray">Today: 9 Apr</span><span class="badge badge-green">● 3 on premises</span></div>
+            </div>
+            <div style="padding:12px;background:var(--surface)">
+              <div class="btn-group" style="margin-bottom:12px">
+                <button class="btn btn-primary btn-sm">+ Walk-in entry</button>
+                <button class="btn btn-sm">⊕ Pre-register</button>
+                <button class="btn btn-sm">⚑ New complaint</button>
+                <div style="flex:1"></div>
+                <select class="form-input form-select" style="width:auto;font-size:12px;padding:5px 28px 5px 10px"><option>Today</option><option>This week</option></select>
+              </div>
+              <div class="stat-row">
+                <div class="stat-card"><div class="stat-lbl">Visitors today</div><div class="stat-num">14</div><div class="stat-sub up">↑ 3 vs yesterday</div></div>
+                <div class="stat-card"><div class="stat-lbl">On premises</div><div class="stat-num" style="color:var(--accent)">3</div><div class="stat-sub" style="color:var(--text-muted)">Checked in, not out</div></div>
+                <div class="stat-card"><div class="stat-lbl">Open complaints</div><div class="stat-num" style="color:var(--red)">7</div><div class="stat-sub down">↑ 2 new today</div></div>
+                <div class="stat-card"><div class="stat-lbl">Avg. resolution</div><div class="stat-num">2.4d</div><div class="stat-sub up">↓ 0.3d improvement</div></div>
+              </div>
+              <div class="two-col">
+                <div class="wf-card">
+                  <div class="wf-card-head">Active visitors <a href="#visitor-list" style="color:var(--accent);font-size:11px;font-weight:400">View all →</a></div>
+                  <table class="wf-table">
+                    <thead><tr><th>Visitor</th><th>Purpose</th><th>In</th><th>Token</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                      <tr><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">RK</span>Ramesh Kumar</div></td><td>HR / Job inquiry</td><td>09:14</td><td><code style="font-size:11px">VIS-2841</code></td><td><span class="badge badge-green">Checked in</span></td><td><button class="btn btn-sm">Check out</button></td></tr>
+                      <tr><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">PP</span>Priya Patel</div></td><td>Admin / Complaint</td><td>10:02</td><td><code style="font-size:11px">VIS-2842</code></td><td><span class="badge badge-purple">VIP</span></td><td><button class="btn btn-sm">Check out</button></td></tr>
+                      <tr><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">MJ</span>Mohan Joshi</div></td><td>Finance / Admission</td><td>11:30</td><td><code style="font-size:11px">VIS-2843</code></td><td><span class="badge badge-green">Checked in</span></td><td><button class="btn btn-sm">Check out</button></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-head">Activity feed</div>
+                  <div style="padding:10px 12px">
+                    <div class="timeline">
+                      <div class="tl-item"><div class="tl-dot green"></div><div style="flex:1"><div class="tl-main">Mohan Joshi checked in</div><div class="tl-sub">VIS-2843</div></div><div class="tl-time">11:30</div></div>
+                      <div class="tl-item"><div class="tl-dot amber"></div><div style="flex:1"><div class="tl-main">#C-0091 assigned to Finance</div><div class="tl-sub">By: Anita</div></div><div class="tl-time">11:22</div></div>
+                      <div class="tl-item"><div class="tl-dot purple"></div><div style="flex:1"><div class="tl-main">VIP pre-reg arrived</div><div class="tl-sub">Priya Patel</div></div><div class="tl-time">10:02</div></div>
+                      <div class="tl-item"><div class="tl-dot gray"></div><div style="flex:1"><div class="tl-main">#C-0089 SLA breached</div><div class="tl-sub">Escalation sent</div></div><div class="tl-time">09:45</div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">States</div>
+            <p><strong>Empty:</strong> "No visitors today. Ready for walk-in entry." with large + CTA centered.</p>
+            <p><strong>Loading:</strong> Skeleton bars on all cards and table rows.</p>
+            <p><strong>Error:</strong> Inline top banner: "Could not load visitor data — Retry"</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Accessibility & mobile</div>
+            <p><code>aria-live="polite"</code> on activity feed for real-time updates.</p>
+            <p>Tab order: CTAs → stat cards → table rows → feed.</p>
+            <p><strong>Mobile:</strong> Stat cards collapse to 2×2. Table becomes per-visitor card with swipe-to-checkout. Feed moves below table.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ VISITOR LIST ══════════════════════════════ -->
+    <div class="section" id="visitor-list">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div>
+            <div class="section-title">Screen 2 — Visitor List</div>
+            <div class="section-subtitle">Full paginated register of all visitor records</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Purpose & roles</div>
+            <p>Full historical list of all visitors. Searchable, filterable. Entry point for re-check-in of returning visitors.</p>
+            <p><strong>Roles:</strong> All (filtered by dept for Dept. staff)</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Filter bar</div>
+            <p>Date range · VIP only (checkbox) · Reason of visit · Department · Check-in status (Active / Checked out / All)</p>
+            <p>Search: mobile number or name with live debounce (300ms)</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Wireframe — Visitor List</div>
+          <div class="wireframe-body">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+              <input class="form-input" placeholder="Search name or mobile…" style="width:220px"/>
+              <select class="form-input form-select" style="width:130px"><option>All statuses</option></select>
+              <select class="form-input form-select" style="width:130px"><option>All departments</option></select>
+              <select class="form-input form-select" style="width:110px"><option>All purposes</option></select>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted)"><input type="checkbox"/> VIP only</label>
+              <div style="flex:1"></div>
+              <a href="#checkin" class="btn btn-primary btn-sm">+ Walk-in entry</a>
+            </div>
+            <table class="wf-table" style="font-size:12px">
+              <thead><tr><th>#</th><th>Visitor</th><th>Mobile</th><th>Last visit</th><th>Total visits</th><th>Tag</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>001</td><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">RK</span>Ramesh Kumar</div></td><td>+91 98765 43210</td><td>9 Apr 2026</td><td>8</td><td><span class="badge badge-purple">VIP</span></td><td><span class="badge badge-green">Active</span></td><td><div style="display:flex;gap:4px"><a href="#visitor-profile" class="btn btn-sm">Profile</a><button class="btn btn-primary btn-sm">Check in</button></div></td></tr>
+                <tr><td>002</td><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">PP</span>Priya Patel</div></td><td>+91 98712 34567</td><td>9 Apr 2026</td><td>3</td><td><span class="badge badge-purple">VIP</span></td><td><span class="badge badge-green">Active</span></td><td><div style="display:flex;gap:4px"><a href="#visitor-profile" class="btn btn-sm">Profile</a><button class="btn btn-primary btn-sm">Check in</button></div></td></tr>
+                <tr><td>003</td><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">DS</span>Deepa Sharma</div></td><td>+91 97654 32109</td><td>7 Apr 2026</td><td>2</td><td>—</td><td><span class="badge badge-gray">Checked out</span></td><td><div style="display:flex;gap:4px"><a href="#visitor-profile" class="btn btn-sm">Profile</a><button class="btn btn-sm">Re-check in</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="spec-box">
+          <div class="spec-box-label">Empty state</div>
+          <p>"No visitors found for these filters. Try widening the date range or clearing filters."</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ VISITOR PROFILE ══════════════════════════════ -->
+    <div class="section" id="visitor-profile">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+          <div>
+            <div class="section-title">Screen 3 — Visitor Profile</div>
+            <div class="section-subtitle">Complete visit history and complaint record for a single visitor</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Layout</div>
+            <p>Profile header (avatar, name, mobile, visit count, VIP badge, quick actions) → 2-col body: left = full visit timeline, right = complaint history + notes</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Visit timeline card</div>
+            <p>Each visit card shows: date, token (VIS-XXXX), purpose, host dept, duration, assigned staff, any complaints raised. Expandable per visit.</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Wireframe — Visitor Profile</div>
+          <div class="wireframe-body">
+            <div style="background:var(--accent-light);padding:16px;display:flex;align-items:center;gap:16px;border-radius:8px;margin-bottom:12px">
+              <div class="avatar avatar-lg" style="width:52px;height:52px;font-size:16px;background:var(--accent);color:white">RK</div>
+              <div style="flex:1">
+                <div style="font-size:18px;font-weight:700">Ramesh Kumar <span class="badge badge-purple">VIP</span></div>
+                <div style="color:var(--text-muted);font-size:13px;margin-top:3px">+91 98765 43210 · 8 visits · First visit: 15 Jan 2025</div>
+              </div>
+              <div class="btn-group">
+                <a href="#checkin" class="btn btn-primary btn-sm">+ New check-in</a>
+                <button class="btn btn-sm">Edit</button>
+                <button class="btn btn-sm">Toggle VIP</button>
+              </div>
+            </div>
+            <div class="two-col">
+              <div>
+                <h3>Visit history</h3>
+                <div class="timeline">
+                  <div class="tl-item"><div class="tl-dot green"></div><div style="flex:1"><div class="tl-main">Visit #8 — 9 Apr 2026 · <code style="font-size:11px">VIS-2844</code></div><div class="tl-sub">Purpose: Admission letter · Finance · Duration: ongoing</div></div></div>
+                  <div class="tl-item"><div class="tl-dot gray"></div><div style="flex:1"><div class="tl-main">Visit #7 — 2 Apr 2026 · <code style="font-size:11px">VIS-2798</code></div><div class="tl-sub">Purpose: Complaint · HR · Duration: 38 min</div></div></div>
+                  <div class="tl-item"><div class="tl-dot gray"></div><div style="flex:1"><div class="tl-main">Visit #6 — 15 Mar 2026 · <code style="font-size:11px">VIS-2741</code></div><div class="tl-sub">Purpose: Job inquiry · HR · Duration: 22 min</div></div></div>
+                </div>
+              </div>
+              <div>
+                <h3>Complaints</h3>
+                <div class="wf-card" style="margin-bottom:8px">
+                  <div class="wf-card-head"><a href="#complaint-detail" style="color:var(--accent)">#C-0091</a> <span class="badge badge-purple">In progress</span></div>
+                  <div class="wf-card-body" style="font-size:12px">Delay in admission letter · Finance · 9 Apr</div>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-head"><a href="#complaint-detail" style="color:var(--accent)">#C-0067</a> <span class="badge badge-green">Completed</span></div>
+                  <div class="wf-card-body" style="font-size:12px">Staff behaviour issue · HR · 2 Apr</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ CHECK-IN ══════════════════════════════ -->
+    <div class="section" id="checkin">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></div>
+          <div>
+            <div class="section-title">Screen 4 — Check-in / Check-out</div>
+            <div class="section-subtitle">4-step receptionist intake flow, keyboard-optimised</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="callout">Entire flow completable in under 60 seconds by a trained receptionist. Full keyboard navigation. <code>Cmd+Enter</code> or <code>F10</code> = Confirm check-in.</div>
+        <h3>Step 1 — Visitor lookup</h3>
+        <div class="wireframe">
+          <div class="wireframe-bar">Step 1 of 4 — Lookup</div>
+          <div class="wireframe-body">
+            <div class="wf-stepper">
+              <span class="wf-step active">1 · Lookup</span><span class="wf-step-sep">→</span>
+              <span class="wf-step future">2 · Details</span><span class="wf-step-sep">→</span>
+              <span class="wf-step future">3 · Purpose</span><span class="wf-step-sep">→</span>
+              <span class="wf-step future">4 · Token</span>
+            </div>
+            <div style="padding:16px;max-width:420px">
+              <div class="form-field">
+                <label class="form-label">Mobile number or visitor name</label>
+                <input class="form-input" placeholder="+91 XXXXX XXXXX or full name" style="font-size:15px;padding:10px 14px"/>
+                <div class="form-helper">Type at least 3 characters to search existing records</div>
+              </div>
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-top:8px">
+                <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Matching records</div>
+                <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);cursor:pointer" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background=''">
+                  <span class="avatar">RK</span>
+                  <div style="flex:1"><div style="font-weight:500">Ramesh Kumar</div><div style="font-size:11px;color:var(--text-muted)">+91 98765 43210 · 7 visits · VIP</div></div>
+                  <span class="badge badge-purple">Select ↵</span>
+                </div>
+                <div style="padding:8px 12px;display:flex;align-items:center;gap:10px;cursor:pointer" onmouseover="this.style.background='var(--accent-light)'" onmouseout="this.style.background=''">
+                  <span class="avatar">RN</span>
+                  <div style="flex:1"><div style="font-weight:500">Rajesh Nair</div><div style="font-size:11px;color:var(--text-muted)">+91 98700 12345 · 2 visits</div></div>
+                  <span class="badge badge-gray">Select</span>
+                </div>
+              </div>
+              <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">Not in list? <button class="btn btn-sm" style="margin-left:6px">+ New visitor</button></div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 2 — Visitor details (pre-filled for returning)</h3>
+        <div class="wireframe">
+          <div class="wireframe-bar">Step 2 of 4 — Visitor details</div>
+          <div class="wireframe-body">
+            <div class="wf-stepper">
+              <span class="wf-step done">✓ Lookup</span><span class="wf-step-sep">→</span>
+              <span class="wf-step active">2 · Details</span><span class="wf-step-sep">→</span>
+              <span class="wf-step future">3 · Purpose</span><span class="wf-step-sep">→</span>
+              <span class="wf-step future">4 · Token</span>
+            </div>
+            <div style="padding:14px">
+              <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+                <span class="avatar avatar-lg">RK</span>
+                <div><div style="font-weight:600">Ramesh Kumar <span class="badge badge-purple">VIP</span></div><div style="font-size:11px;color:var(--text-muted)">+91 98765 43210 · Visit #8 · Last: 2 Apr 2026</div></div>
+              </div>
+              <div class="form-row">
+                <div class="form-field"><label class="form-label">Full name *</label><input class="form-input" value="Ramesh Kumar" style="background:var(--surface2)"/></div>
+                <div class="form-field"><label class="form-label">Mobile *</label><input class="form-input" value="+91 98765 43210" style="background:var(--surface2)"/></div>
+                <div class="form-field"><label class="form-label">ID type</label><select class="form-input form-select"><option>Aadhaar</option><option>PAN</option><option>Passport</option><option>Voter ID</option></select></div>
+                <div class="form-field"><label class="form-label">ID number</label><input class="form-input" placeholder="Optional"/></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="border:1px dashed var(--border-strong);border-radius:6px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:var(--text-muted);cursor:pointer">📷 Capture selfie</div>
+                <div style="border:1px dashed var(--border-strong);border-radius:6px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:var(--text-muted);cursor:pointer">🪪 Upload ID scan</div>
+              </div>
+              <div class="form-helper" style="margin-top:6px">Photo linked to this visit only. Max 2MB. Optional but recommended for VIP guests.</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 3 — Purpose</h3>
+        <div class="wireframe">
+          <div class="wireframe-bar">Step 3 of 4 — Purpose of visit</div>
+          <div class="wireframe-body">
+            <div style="padding:14px">
+              <div class="form-field">
+                <label class="form-label">Reason of visit *</label>
+                <div class="pill-group">
+                  <span class="pill" onclick="this.classList.toggle('selected')">Complaint</span>
+                  <span class="pill selected" onclick="this.classList.toggle('selected')">Admission letter</span>
+                  <span class="pill" onclick="this.classList.toggle('selected')">Suggestion / feedback</span>
+                  <span class="pill" onclick="this.classList.toggle('selected')">Job inquiry</span>
+                  <span class="pill" onclick="this.classList.toggle('selected')">Other</span>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Host department</label>
+                <select class="form-input form-select"><option>Finance</option><option>HR</option><option>Admin</option><option>Operations</option></select>
+                <div class="form-helper">Duty officer will be notified automatically via SMS.</div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Remarks</label>
+                <textarea class="form-input" rows="2" placeholder="Optional notes for reception or host…"></textarea>
+              </div>
+              <div class="warning-box">Pre-registration match found: "Admission letter collection · Expected 10:00 · Admin officer Sunita." This visit will be linked automatically.</div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Step 4 — Token / QR</h3>
+        <div class="wireframe">
+          <div class="wireframe-bar">Step 4 of 4 — Token & confirmation</div>
+          <div class="wireframe-body">
+            <div class="wf-stepper">
+              <span class="wf-step done">✓ Lookup</span><span class="wf-step-sep">→</span>
+              <span class="wf-step done">✓ Details</span><span class="wf-step-sep">→</span>
+              <span class="wf-step done">✓ Purpose</span><span class="wf-step-sep">→</span>
+              <span class="wf-step active">4 · Token</span>
+            </div>
+            <div style="padding:16px;text-align:center">
+              <div style="background:var(--surface2);border-radius:12px;padding:24px;display:inline-block;text-align:center;margin-bottom:16px">
+                <div style="width:80px;height:80px;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-faint)">QR code</div>
+                <div class="token">VIS-2844</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Valid for today · 9 Apr 2026</div>
+              </div>
+              <div class="btn-group" style="justify-content:center;margin-bottom:12px">
+                <button class="btn btn-sm">🖨️ Print visitor pass</button>
+                <button class="btn btn-sm">📱 SMS to visitor</button>
+                <button class="btn btn-sm">💬 WhatsApp</button>
+              </div>
+              <button class="btn btn-primary" style="font-size:14px;padding:10px 28px">✓ Confirm check-in</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>Check-out flow</h3>
+        <div class="wireframe">
+          <div class="wireframe-bar">Check-out — minimal flow</div>
+          <div class="wireframe-body">
+            <div style="padding:14px;max-width:400px">
+              <div class="form-field">
+                <label class="form-label">Search by token or name</label>
+                <input class="form-input" placeholder="VIS-XXXX or visitor name" style="font-size:14px"/>
+              </div>
+              <div style="background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+                <span class="avatar">RK</span>
+                <div style="flex:1"><div style="font-weight:500">Ramesh Kumar</div><div style="font-size:11px;color:var(--text-muted)">Checked in 09:14 · Duration: 2h 18m · Finance / Admission</div></div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px"><input type="checkbox" checked/> Send feedback survey via SMS</label>
+                <button class="btn btn-primary">Confirm check-out</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ PRE-REGISTRATION ══════════════════════════════ -->
+    <div class="section" id="prereg">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M9 16l2 2 4-4"/></svg></div>
+          <div>
+            <div class="section-title">Screen 5 — Pre-registration</div>
+            <div class="section-subtitle">Register expected visitors in advance with VIP and helpdesk notes</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Purpose</div>
+            <p>Admin or helpdesk pre-registers an expected visitor. On arrival, the receptionist sees a yellow "Pre-registered" banner in the check-in flow and the record is auto-matched by mobile number.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Form fields</div>
+            <p>Name · Mobile · Expected date/time · Purpose · Host name/dept · VIP toggle · Notes for receptionist · Attachment (optional)</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Pre-registration List</div>
+          <div class="wireframe-body">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center">
+              <div style="display:flex;gap:8px">
+                <input class="form-input" placeholder="Search visitor…" style="width:180px"/>
+                <input class="form-input" type="date" style="width:140px" value="2026-04-09"/>
+                <select class="form-input form-select" style="width:130px"><option>All statuses</option><option>Pending</option><option>Arrived</option><option>Cancelled</option></select>
+              </div>
+              <button class="btn btn-primary btn-sm">+ New pre-registration</button>
+            </div>
+            <table class="wf-table">
+              <thead><tr><th>Visitor</th><th>Mobile</th><th>Expected</th><th>Purpose</th><th>Host</th><th>VIP</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td>Ramesh Kumar</td><td>+91 98765 43210</td><td>9 Apr 10:00</td><td>Admission letter</td><td>Finance</td><td><span class="badge badge-purple">VIP</span></td><td><span class="badge badge-green">Arrived</span></td><td><button class="btn btn-sm">View</button></td></tr>
+                <tr><td>Ananya Singh</td><td>+91 91234 56789</td><td>9 Apr 14:30</td><td>Job inquiry</td><td>HR</td><td>—</td><td><span class="badge badge-blue">Pending</span></td><td><button class="btn btn-sm">Edit</button></td></tr>
+                <tr><td>Vikram Rao</td><td>+91 99887 76655</td><td>10 Apr 11:00</td><td>Complaint</td><td>Admin</td><td>—</td><td><span class="badge badge-blue">Pending</span></td><td><button class="btn btn-sm">Edit</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ VIP ══════════════════════════════ -->
+    <div class="section" id="vip">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div>
+            <div class="section-title">Screen 6 — VIP Guest Management</div>
+            <div class="section-subtitle">Tag, track, and surface VIP visitors with priority treatment</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">VIP behaviour</div>
+            <p>VIP-tagged visitors receive: automatic SMS on arrival to their host, priority indicator on the dashboard active table, VIP badge (primary / header color) throughout all screens.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Management actions</div>
+            <p>Tag/untag VIP from visitor profile or this page. Add internal notes per VIP (e.g. "Minister's office — always alert HOD"). Full visit history visible.</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">VIP Guest List</div>
+          <div class="wireframe-body">
+            <table class="wf-table">
+              <thead><tr><th>Visitor</th><th>Mobile</th><th>Total visits</th><th>Last visit</th><th>VIP since</th><th>Notes</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">RK</span>Ramesh Kumar <span class="badge badge-purple" style="margin-left:4px">VIP</span></div></td><td>+91 98765 43210</td><td>8</td><td>9 Apr 2026</td><td>1 Mar 2025</td><td style="font-size:11px;color:var(--text-muted)">Ministerial liaison</td><td><div style="display:flex;gap:4px"><a href="#visitor-profile" class="btn btn-sm">Profile</a><button class="btn btn-sm" style="color:var(--red);border-color:var(--red)">Remove VIP</button></div></td></tr>
+                <tr><td><div style="display:flex;align-items:center;gap:6px"><span class="avatar">PP</span>Priya Patel <span class="badge badge-purple" style="margin-left:4px">VIP</span></div></td><td>+91 98712 34567</td><td>3</td><td>9 Apr 2026</td><td>5 Apr 2026</td><td style="font-size:11px;color:var(--text-muted)">Donor committee</td><td><div style="display:flex;gap:4px"><a href="#visitor-profile" class="btn btn-sm">Profile</a><button class="btn btn-sm" style="color:var(--red);border-color:var(--red)">Remove VIP</button></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ COMPLAINT LIST ══════════════════════════════ -->
+    <div class="section" id="complaint-list">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+          <div>
+            <div class="section-title">Screen 7 — Complaint List</div>
+            <div class="section-subtitle">Centralised triage table for all complaints</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Filters</div>
+            <p>Status · Source · Type · Department · Assigned staff · Date range · SLA breached (checkbox)</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">SLA row highlighting</div>
+            <p>Rows with breached SLA get a very faint red background (5% opacity). SLA bar in each row: green → amber at 60% elapsed → red at 85%.</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Complaint List Table</div>
+          <div class="wireframe-body">
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+              <input class="form-input" placeholder="Search complaints…" style="width:180px"/>
+              <select class="form-input form-select" style="width:130px"><option>All statuses</option></select>
+              <select class="form-input form-select" style="width:130px"><option>All departments</option></select>
+              <select class="form-input form-select" style="width:120px"><option>All sources</option></select>
+              <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"/> SLA breached</label>
+              <div style="flex:1"></div>
+              <a href="#complaint-create" class="btn btn-primary btn-sm">+ New complaint</a>
+            </div>
+            <table class="wf-table" style="font-size:12px">
+              <thead><tr><th>#ID</th><th>Summary</th><th>Visitor</th><th>Source</th><th>Dept</th><th>Assigned</th><th>SLA</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><code>C-0091</code></td><td style="max-width:140px">Delay in admission letter</td><td>Ramesh K.</td><td>Direct</td><td>Finance</td><td>Suresh M.</td><td><div class="sla-bar-wrap"><div class="sla-bar-fill" style="width:38%"></div></div></td><td><span class="badge badge-purple">In progress</span></td><td><a href="#complaint-detail" class="btn btn-sm">Open</a></td></tr>
+                <tr style="background:rgba(226,75,74,0.04)"><td><code>C-0089</code></td><td>Staff behaviour issue</td><td>Deepa S.</td><td>Portal</td><td>HR</td><td>Kavita R.</td><td><div class="sla-bar-wrap"><div class="sla-bar-fill" style="width:95%;background:var(--red)"></div></div></td><td><span class="badge badge-red">SLA breached</span></td><td><a href="#complaint-detail" class="btn btn-sm">Open</a></td></tr>
+                <tr><td><code>C-0087</code></td><td>Suggestion for helpdesk</td><td>Mohan J.</td><td>WhatsApp</td><td>Admin</td><td>—</td><td><div class="sla-bar-wrap"><div class="sla-bar-fill" style="width:10%"></div></div></td><td><span class="badge badge-blue">New</span></td><td><a href="#complaint-detail" class="btn btn-sm">Open</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="spec-box">
+          <div class="spec-box-label">Bulk actions</div>
+          <p>Select rows → "Assign selected to department" / "Change status" / "Export selected". Confirmation required for bulk status change.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ COMPLAINT DETAIL ══════════════════════════════ -->
+    <div class="section" id="complaint-detail">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div>
+            <div class="section-title">Screen 8 — Complaint Detail + Timeline</div>
+            <div class="section-subtitle">Full lifecycle view: status pipeline, activity log, assignment, SLA</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="callout">Internal notes are never visible to the visitor. "Note + notify visitor" creates an internal note AND sends an SMS simultaneously in one action.</div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Complaint Detail — #C-0091</div>
+          <div class="wireframe-body">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;gap:12px">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:11px;color:var(--text-muted)">Complaints /</span><code style="font-size:12px;color:var(--blue)">C-0091</code><span class="badge badge-purple">Work in progress</span></div>
+                <div style="font-size:16px;font-weight:600;margin-bottom:3px">Delay in issuance of admission letter — Finance dept</div>
+                <div style="font-size:11px;color:var(--text-muted)">Opened by Ramesh Kumar · 9 Apr 2026, 10:42 · Source: Direct office</div>
+              </div>
+              <div class="btn-group"><button class="btn btn-sm">Edit</button><button class="btn btn-primary btn-sm">Update status</button></div>
+            </div>
+            <div class="two-col">
+              <div>
+                <div class="wf-card" style="margin-bottom:10px">
+                  <div class="wf-card-head">Status pipeline</div>
+                  <div class="wf-card-body">
+                    <div class="status-pipeline">
+                      <span class="sp-step done">New</span><span class="sp-sep">→</span>
+                      <span class="sp-step current">In progress</span><span class="sp-sep">→</span>
+                      <span class="sp-step">Completed</span><span class="sp-sep">·</span>
+                      <span class="sp-step">Out of area</span><span class="sp-sep">·</span>
+                      <span class="sp-step">Redirected</span>
+                    </div>
+                    <div class="btn-group">
+                      <button class="btn btn-sm">Mark completed</button>
+                      <button class="btn btn-sm">Out of area</button>
+                      <button class="btn btn-sm">Redirect</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-head">Activity timeline <span style="font-size:11px;font-weight:400;color:var(--text-muted)">4 events</span></div>
+                  <div style="padding:8px 12px">
+                    <div class="timeline">
+                      <div class="tl-item"><div class="tl-dot purple"></div><div style="flex:1"><div class="tl-main">Assigned to Finance — Suresh Mehta</div><div class="tl-sub">By: Helpdesk Anita · SMS notification sent</div></div><div class="tl-time">11:22</div></div>
+                      <div class="tl-item"><div class="tl-dot amber"></div><div style="flex:1"><div class="tl-main">Status: New → In progress</div><div class="tl-sub">By: Suresh Mehta · Note: "Letter pending HOD approval"</div></div><div class="tl-time">11:38</div></div>
+                      <div class="tl-item"><div class="tl-dot blue"></div><div style="flex:1"><div class="tl-main">SMS notification delivered</div><div class="tl-sub">"Your complaint is being processed"</div></div><div class="tl-time">11:39</div></div>
+                      <div class="tl-item"><div class="tl-dot gray"></div><div style="flex:1"><div class="tl-main">Complaint registered</div><div class="tl-sub">Via reception · Token: VIS-2844</div></div><div class="tl-time">10:42</div></div>
+                    </div>
+                  </div>
+                  <div style="padding:0 12px 12px">
+                    <textarea class="form-input" rows="2" placeholder="Add internal note or remark…"></textarea>
+                    <div class="btn-group" style="margin-top:6px">
+                      <button class="btn btn-sm" style="flex:1">Add note</button>
+                      <button class="btn btn-primary btn-sm" style="flex:1">Note + notify visitor</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="wf-card">
+                  <div class="wf-card-head">Complaint info</div>
+                  <div class="wf-card-body">
+                    <table class="info-table">
+                      <tr><td>Type</td><td>Service delay</td></tr>
+                      <tr><td>Source</td><td>Direct office</td></tr>
+                      <tr><td>Department</td><td>Finance</td></tr>
+                      <tr><td>Priority</td><td style="color:var(--accent)">High</td></tr>
+                      <tr><td>SLA deadline</td><td style="color:var(--amber)">11 Apr · 1d 13h</td></tr>
+                    </table>
+                    <div class="sla-bar-wrap" style="margin-top:8px"><div class="sla-bar-fill" style="width:38%"></div></div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">38% of SLA elapsed</div>
+                  </div>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-head">Assigned to <a href="#" style="font-size:11px;font-weight:400;color:var(--accent)">Reassign</a></div>
+                  <div class="wf-card-body">
+                    <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:6px;padding:8px;margin-bottom:8px">
+                      <span class="avatar">SM</span>
+                      <div><div style="font-weight:500">Suresh Mehta</div><div style="font-size:11px;color:var(--text-muted)">Finance dept · Duty officer</div></div>
+                    </div>
+                    <div class="btn-group">
+                      <button class="btn btn-sm" style="flex:1">📞 Call</button>
+                      <button class="btn btn-sm" style="flex:1">💬 WhatsApp</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="wf-card">
+                  <div class="wf-card-head">Visitor <a href="#visitor-profile" style="font-size:11px;font-weight:400;color:var(--accent)">View profile</a></div>
+                  <div class="wf-card-body">
+                    <table class="info-table">
+                      <tr><td>Name</td><td>Ramesh Kumar</td></tr>
+                      <tr><td>Mobile</td><td>+91 98765 43210</td></tr>
+                      <tr><td>Token</td><td><code style="font-size:11px">VIS-2844</code></td></tr>
+                      <tr><td>Tag</td><td><span class="badge badge-purple">VIP</span></td></tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Reassign drawer</div>
+            <p>Opens a right-side drawer (not a modal) to search staff within a department. Avoids full-page interruption while maintaining context.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Accessibility</div>
+            <p>Each status pipeline button is focusable and announces its action. Timeline is a <code>role="list"</code>. Status change requires confirmation dialog: "Change status to Completed? This will trigger a feedback SMS."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ COMPLAINT CREATE ══════════════════════════════ -->
+    <div class="section" id="complaint-create">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+          <div>
+            <div class="section-title">Screen 9 — Create / Edit Complaint</div>
+            <div class="section-subtitle">Register a complaint with source, type, priority and assignment</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="callout">When opened from the check-in flow (Purpose = Complaint), source is pre-filled as "Direct office" and visitor is pre-linked. Saves one complete flow.</div>
+        <div class="wireframe">
+          <div class="wireframe-bar">New Complaint Form</div>
+          <div class="wireframe-body">
+            <div class="two-col">
+              <div>
+                <h3>Complainant</h3>
+                <div class="form-field">
+                  <label class="form-label">Link to visitor</label>
+                  <input class="form-input" value="Ramesh Kumar (+91 98765 43210)" style="background:var(--surface2)"/>
+                  <div class="form-helper">Auto-linked from check-in. <a href="#" style="color:var(--accent)">Change visitor</a></div>
+                </div>
+                <h3>Complaint details</h3>
+                <div class="form-row">
+                  <div class="form-field">
+                    <label class="form-label">Complaint type *</label>
+                    <select class="form-input form-select"><option>Service delay</option><option>Staff behaviour</option><option>Infrastructure</option><option>Other</option></select>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Source *</label>
+                    <select class="form-input form-select"><option selected>Direct office</option><option>Portal</option><option>Social media</option><option>SMS</option><option>WhatsApp</option><option>Phone</option><option>Email</option></select>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Priority</label>
+                    <div class="pill-group">
+                      <span class="pill" onclick="setPriority(this,'Low')">Low</span>
+                      <span class="pill" onclick="setPriority(this,'Medium')">Medium</span>
+                      <span class="pill selected" onclick="setPriority(this,'High')">High</span>
+                      <span class="pill" onclick="setPriority(this,'Critical')">Critical</span>
+                    </div>
+                  </div>
+                  <div class="form-field">
+                    <label class="form-label">Assign to department</label>
+                    <select class="form-input form-select"><option>Finance</option><option>HR</option><option>Admin</option></select>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Description * <span style="font-size:10px;color:var(--text-faint)">(min. 30 characters)</span></label>
+                  <textarea class="form-input" rows="4" placeholder="Describe the complaint in detail…"></textarea>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">Attachments</label>
+                  <div style="border:1px dashed var(--border-strong);border-radius:6px;padding:20px;text-align:center;font-size:12px;color:var(--text-muted)">Drop files here or <a href="#" style="color:var(--accent)">browse</a> · PDF, JPG, PNG up to 5MB</div>
+                </div>
+              </div>
+              <div>
+                <h3>SLA preview</h3>
+                <div style="background:var(--surface2);border-radius:8px;padding:14px;margin-bottom:12px">
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Based on High priority rule:</div>
+                  <div style="font-size:20px;font-weight:700;color:var(--accent)">48 hours</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Deadline: 11 Apr 2026, 10:42</div>
+                </div>
+                <div class="callout">Assignment notification will be sent automatically to Finance dept duty officer via SMS on save.</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid var(--border)">
+              <button class="btn btn-sm">Cancel</button>
+              <button class="btn btn-primary">Save & assign complaint</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ FEEDBACK ══════════════════════════════ -->
+    <div class="section" id="feedback">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+          <div>
+            <div class="section-title">Screen 10 — Feedback & Review</div>
+            <div class="section-subtitle">Post-resolution visitor satisfaction and internal staff review</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Trigger</div>
+            <p>Feedback SMS/WhatsApp sent automatically when complaint status → Completed, after a configurable delay (default 1 hour). Link opens a minimal branded page (or SMS-reply code for no-smartphone users).</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Detail view contents</div>
+            <p>Star rating (large 1–5 display) · Visitor comment · Resolution summary · Staff internal review textarea · Complaint link · Handling staff name</p>
+          </div>
+        </div>
+        <div class="wireframe">
+          <div class="wireframe-bar">Feedback List</div>
+          <div class="wireframe-body">
+            <table class="wf-table">
+              <thead><tr><th>Visitor</th><th>Complaint</th><th>Rating</th><th>Comment</th><th>Resolved by</th><th>Date</th><th>Internal remark</th></tr></thead>
+              <tbody>
+                <tr><td>Deepa Sharma</td><td><code>C-0082</code></td><td>⭐⭐⭐⭐⭐ <strong>5/5</strong></td><td style="font-size:11px;color:var(--text-muted)">Very quick response</td><td>Kavita R.</td><td>7 Apr</td><td><button class="btn btn-sm">Add remark</button></td></tr>
+                <tr><td>Rohit Nair</td><td><code>C-0079</code></td><td>⭐⭐⭐ <strong>3/5</strong></td><td style="font-size:11px;color:var(--text-muted)">Took 3 days, expected 1</td><td>Suresh M.</td><td>5 Apr</td><td><span class="badge badge-amber">Review noted</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ NOTIFICATIONS ══════════════════════════════ -->
+    <div class="section" id="notifications">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+          <div>
+            <div class="section-title">Screen 11 — Notification Log</div>
+            <div class="section-subtitle">Full audit trail of all outgoing SMS, WhatsApp, and call notifications</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="wireframe">
+          <div class="wireframe-bar">Notification Log</div>
+          <div class="wireframe-body">
+            <table class="wf-table" style="font-size:12px">
+              <thead><tr><th>Time</th><th>Channel</th><th>Recipient</th><th>Event</th><th>Message preview</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>11:39</td><td><span class="badge badge-blue">SMS</span></td><td>Ramesh K. (+91 98765…)</td><td>Complaint update</td><td style="font-size:11px;color:var(--text-muted)">"Your complaint #C-0091 is being…"</td><td><span class="badge badge-green">Delivered</span></td><td></td></tr>
+                <tr><td>11:22</td><td><span class="badge badge-green">WhatsApp</span></td><td>Suresh M. (+91 98100…)</td><td>Assignment</td><td style="font-size:11px;color:var(--text-muted)">"Complaint #C-0091 assigned to…"</td><td><span class="badge badge-green">Delivered</span></td><td></td></tr>
+                <tr><td>10:43</td><td><span class="badge badge-blue">SMS</span></td><td>Ramesh K. (+91 98765…)</td><td>Complaint registered</td><td style="font-size:11px;color:var(--text-muted)">"Complaint registered #C-0091"</td><td><span class="badge badge-green">Delivered</span></td><td></td></tr>
+                <tr><td>10:14</td><td><span class="badge badge-blue">SMS</span></td><td>Meena T. (+91 97654…)</td><td>Check-in alert</td><td style="font-size:11px;color:var(--text-muted)">"Your visitor Priya Patel has…"</td><td><span class="badge badge-red">Failed</span></td><td><button class="btn btn-sm" style="color:var(--red);border-color:var(--red)">Retry</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="spec-box">
+          <div class="spec-box-label">Technical note</div>
+          <p>Delivery status fetched from SMS/WhatsApp gateway webhooks. Failed notifications show a retry button inline. Log is append-only (no deletion) for audit compliance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ REPORTS ══════════════════════════════ -->
+    <div class="section" id="reports">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+          <div>
+            <div class="section-title">Screen 12 — Reports & Export</div>
+            <div class="section-subtitle">Filterable reports with CSV, Excel, and PDF export</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="wireframe">
+          <div class="wireframe-bar">Reports Page</div>
+          <div class="wireframe-body">
+            <div class="two-col">
+              <div>
+                <h3>Report filters</h3>
+                <div class="form-field"><label class="form-label">Report type</label>
+                  <div class="pill-group">
+                    <span class="pill selected">Visitor summary</span><span class="pill">Complaint report</span><span class="pill">Feedback report</span><span class="pill">Department-wise</span><span class="pill">VIP report</span>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-field"><label class="form-label">Date from</label><input class="form-input" type="date" value="2026-04-01"/></div>
+                  <div class="form-field"><label class="form-label">Date to</label><input class="form-input" type="date" value="2026-04-09"/></div>
+                  <div class="form-field"><label class="form-label">Department</label><select class="form-input form-select"><option>All departments</option></select></div>
+                  <div class="form-field"><label class="form-label">Status</label><select class="form-input form-select"><option>All statuses</option></select></div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"/> VIP only</label>
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox"/> SLA breached only</label>
+                </div>
+                <button class="btn btn-primary" style="margin-bottom:16px">Apply filters & preview</button>
+              </div>
+              <div>
+                <h3>Export</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <button class="btn btn-sm" style="flex-direction:column;height:56px;justify-content:center">📄<br/>CSV</button>
+                  <button class="btn btn-sm" style="flex-direction:column;height:56px;justify-content:center">📊<br/>Excel (xlsx)</button>
+                  <button class="btn btn-sm" style="flex-direction:column;height:56px;justify-content:center">📋<br/>PDF (tabular)</button>
+                  <button class="btn btn-primary btn-sm" style="flex-direction:column;height:56px;justify-content:center">📈<br/>PDF + charts</button>
+                </div>
+                <div class="form-helper" style="margin-top:8px">Large exports (>5,000 rows) are queued and a download link emailed to you.</div>
+              </div>
+            </div>
+            <h3>Preview — Visitor summary (top 50 rows)</h3>
+            <table class="wf-table" style="font-size:12px">
+              <thead><tr><th>Date</th><th>Visitor</th><th>Purpose</th><th>Department</th><th>Duration</th><th>Complaints</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>9 Apr</td><td>Ramesh Kumar</td><td>Admission letter</td><td>Finance</td><td>Ongoing</td><td>1</td><td><span class="badge badge-green">Checked in</span></td></tr>
+                <tr><td>9 Apr</td><td>Priya Patel</td><td>Complaint</td><td>Admin</td><td>Ongoing</td><td>0</td><td><span class="badge badge-purple">VIP</span></td></tr>
+                <tr><td>7 Apr</td><td>Deepa Sharma</td><td>Suggestion</td><td>HR</td><td>24 min</td><td>0</td><td><span class="badge badge-gray">Checked out</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ SETTINGS ══════════════════════════════ -->
+    <div class="section" id="settings">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <div>
+            <div class="section-title">Screen 13 — Settings</div>
+            <div class="section-subtitle">Admin-only: statuses, types, templates, SLA rules</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Tab 1 — Statuses & Types</div>
+            <p>Add/edit/reorder complaint types and complaint sources. Drag-and-drop reorder. Each type has a name, color chip, and default SLA override.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Tab 2 — Departments</div>
+            <p>Map departments for assignment. Set default duty officer per dept. Department head receives escalation SMS if SLA breaches.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Tab 3 — Notification templates</div>
+            <p>SMS and WhatsApp message templates per event: Check-in, Complaint registered, Status changed, Feedback request. Variable picker: <code>{'{{'}visitor_name{'}}'}</code>, <code>{'{{'}token{'}}'}</code>, <code>{'{{'}complaint_id{'}}'}</code>, <code>{'{{'}dept{'}}'}</code></p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Tab 4 — SLA Rules</div>
+            <p>Hours-to-resolve per priority: Low 72h, Medium 48h, High 24h, Critical 4h. Escalation contact per priority tier.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Tab 5 — General</div>
+            <p>Token prefix (default: VIS-). Auto-feedback trigger toggle. Delay after resolution (default 1h). Kiosk mode toggle (Phase 2, grayed out with "Coming soon" badge).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ UX FLOWS ══════════════════════════════ -->
+    <div class="section" id="ux-flows">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+          <div>
+            <div class="section-title">D. UX Flows</div>
+            <div class="section-subtitle">Step-by-step user journeys for all primary flows</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <h3>Flow 1 — New walk-in visitor</h3>
+        <div class="flow" style="margin-bottom:16px">
+          <span class="flow-node start">Visitor at desk</span><span class="flow-arr">→</span>
+          <span class="flow-node blue">Type mobile / name</span><span class="flow-arr">→</span>
+          <span class="flow-node">Not found?</span><span class="flow-arr">→</span>
+          <span class="flow-node">Manual entry form</span><span class="flow-arr">→</span>
+          <span class="flow-node">Choose purpose</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">Token generated</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Checked in ✓</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Optional: Photo capture prompted after manual entry. Dept notified automatically. Token printed or SMS'd on confirmation.</p>
+
+        <h3>Flow 2 — Returning visitor repeat entry</h3>
+        <div class="flow" style="margin-bottom:16px">
+          <span class="flow-node start">Visitor at desk</span><span class="flow-arr">→</span>
+          <span class="flow-node blue">Mobile lookup</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Existing record found</span><span class="flow-arr">→</span>
+          <span class="flow-node">Pre-filled form</span><span class="flow-arr">→</span>
+          <span class="flow-node">Confirm/update purpose</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">New token issued</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Checked in ✓</span>
+        </div>
+        <div class="callout" style="margin-bottom:16px"><strong>Duplicate guard:</strong> If same mobile number attempts check-in twice in one day: "This visitor checked in today at 09:14 as VIS-2841. Proceed as new visit or view existing?" Prevents accidental duplicates.</div>
+
+        <h3>Flow 3 — Pre-registered VIP arrival</h3>
+        <div class="flow" style="margin-bottom:16px">
+          <span class="flow-node start">VIP arrives</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">Name / ID lookup</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">Pre-reg match shown</span><span class="flow-arr">→</span>
+          <span class="flow-node amber">1-click VIP check-in</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Host notified (SMS)</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Checked in ✓</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Pre-registration match is surfaced as a yellow banner in step 3 of check-in. VIP lane skips photo/ID prompts by default.</p>
+
+        <h3>Flow 4 — Complaint registration and assignment</h3>
+        <div class="flow" style="margin-bottom:8px">
+          <span class="flow-node start">Visitor at desk</span><span class="flow-arr">→</span>
+          <span class="flow-node">Purpose = Complaint</span><span class="flow-arr">→</span>
+          <span class="flow-node">Complaint form opens</span><span class="flow-arr">→</span>
+          <span class="flow-node">Type + source + description</span><span class="flow-arr">→</span>
+          <span class="flow-node">Assign dept</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">Saved + #ID generated</span><span class="flow-arr">→</span>
+          <span class="flow-node green">SMS sent to visitor + dept</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Opening complaint inline from check-in purpose = Complaint auto-links visitor and pre-fills source as "Direct office".</p>
+
+        <h3>Flow 5 — Complaint status transitions</h3>
+        <div class="flow" style="margin-bottom:8px">
+          <span class="flow-node blue">New</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">In progress</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Completed</span>
+        </div>
+        <div class="flow" style="margin-bottom:16px">
+          <span class="flow-node blue">New / In progress</span><span class="flow-arr">→</span>
+          <span class="flow-node amber">Out of area</span><span class="flow-arr">→</span>
+          <span class="flow-node">Redirected</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">Every status change: (1) records in timeline with actor + timestamp, (2) triggers SMS to visitor if "notify visitor" is on for that event, (3) logs notification in notification log.</p>
+
+        <h3>Flow 6 — Feedback capture</h3>
+        <div class="flow" style="margin-bottom:16px">
+          <span class="flow-node green">Complaint → Completed</span><span class="flow-arr">→</span>
+          <span class="flow-node">Wait 1h (configurable)</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">SMS/WhatsApp with rating link</span><span class="flow-arr">→</span>
+          <span class="flow-node">Visitor rates 1–5</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Feedback saved → list</span>
+        </div>
+
+        <h3>Flow 7 — Report export</h3>
+        <div class="flow">
+          <span class="flow-node start">Reports page</span><span class="flow-arr">→</span>
+          <span class="flow-node">Set filters</span><span class="flow-arr">→</span>
+          <span class="flow-node">Preview top 50 rows</span><span class="flow-arr">→</span>
+          <span class="flow-node purple">Choose format</span><span class="flow-arr">→</span>
+          <span class="flow-node green">Download / email link ✓</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ COMPONENTS ══════════════════════════════ -->
+    <div class="section" id="components">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+          <div>
+            <div class="section-title">E. Component Inventory</div>
+            <div class="section-subtitle">New components vs reused Worksuite components</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">New components (build fresh)</div>
+            <div class="chip-list">
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Visit token badge (VIS-XXXX)</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">QR code display modal</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Visit timeline component</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">SLA progress bar</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Complaint pipeline stepper</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Selfie/ID upload drop zone</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Notification delivery log row</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Star rating widget</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Visitor lookup typeahead</span>
+              <span class="chip" style="border-color:var(--accent);color:var(--accent-dark)">Pre-reg match banner</span>
+            </div>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Reused unchanged</div>
+            <div class="chip-list">
+              <span class="chip">Data table + column filters</span>
+              <span class="chip">Form controls (input, select, textarea)</span>
+              <span class="chip">Status badge / chip</span>
+              <span class="chip">Card + card-header pattern</span>
+              <span class="chip">Avatar / initials circle</span>
+              <span class="chip">Modal / drawer</span>
+              <span class="chip">Sidebar accordion group</span>
+              <span class="chip">Export format buttons</span>
+              <span class="chip">Pagination component</span>
+              <span class="chip">Date range picker</span>
+              <span class="chip">Breadcrumb component</span>
+              <span class="chip">Confirmation dialog</span>
+              <span class="chip">Toast notifications</span>
+            </div>
+          </div>
+        </div>
+        <div class="callout">The complaint pipeline uses a <strong>single status row</strong> (not Kanban). Kanban adds visual overhead without benefit at this data density. Kanban can be added as an optional view toggle in Phase 3 for teams managing 20+ simultaneous complaints per user.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ TOKENS ══════════════════════════════ -->
+    <div class="section" id="tokens">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
+          <div>
+            <div class="section-title">F. Design Token Guidance</div>
+            <div class="section-subtitle">Incremental additions only — no new design language</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <table class="mvp-table">
+          <thead><tr><th>Token</th><th>Value</th><th>Usage</th><th>Where defined</th></tr></thead>
+          <tbody>
+            <tr><td><code>--header_color</code></td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#171f29"></div><code>#171f29</code> <span style="color:var(--text-muted);font-weight:500">(default)</span></div></td><td>Primary buttons, active sidebar/tab, stepper, links</td><td><code>resources/views/sections/theme_css.blade.php</code> — per company</td></tr>
+            <tr><td><code>--color-page-bg</code></td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#f3f5f8;border:1px solid #e8eef3"></div><code>#f3f5f8</code></div></td><td>Main content wrapper (<code>main-container</code> / <code>bg-additional-grey</code>)</td><td><code>public/css/main.css</code> utility classes</td></tr>
+            <tr><td><code>--color-vip-badge</code></td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:16px;height:16px;border-radius:3px;background:#f2f4f7;border:1px solid #171f29"></div><code>outline + header</code></div></td><td>VIP label — use <code>.badge</code> + border or reuse warning/primary variant</td><td>Keep consistent with existing badge components</td></tr>
+            <tr><td>Visit token font</td><td><code>font-family: monospace</code></td><td>VIS-XXXX display, token in tables</td><td>Use existing <code>font-mono</code> variable</td></tr>
+            <tr><td>SLA bar height</td><td><code>6px</code></td><td>SLA progress bar — slightly thicker than standard for urgency</td><td>Inline component style</td></tr>
+            <tr><td>SLA amber threshold</td><td><code>60%</code></td><td>Bar color changes to amber at 60% elapsed</td><td>Component logic</td></tr>
+            <tr><td>SLA red threshold</td><td><code>85%</code></td><td>Bar color changes to red at 85% elapsed</td><td>Component logic</td></tr>
+          </tbody>
+        </table>
+        <div class="callout">All spacing, card density, table padding, button styles, form controls and modal behavior reuse existing Worksuite tokens <strong>unchanged</strong>. Zero design language conflicts.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ DEV NOTES ══════════════════════════════ -->
+    <div class="section" id="devnotes">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+          <div>
+            <div class="section-title">G. Developer Handoff Notes</div>
+            <div class="section-subtitle">Laravel/Blade/Livewire implementation guidance</div>
+          </div>
+        </div>
+        <div class="section-toggle">▾</div>
+      </div>
+      <div class="section-body">
+        <h3>Recommended Livewire components</h3>
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">VisitorLookupStep</div>
+            <p>Real-time mobile/name search as user types. Debounce 300ms. Returns: existing record or "new visitor" prompt. Highlights pre-registered match.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">CheckinStepper</div>
+            <p>Manages 4-step state, saves draft to session between steps. Emits <code>VisitorCheckedIn</code> event on confirmation.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">ComplaintStatusUpdater</div>
+            <p>Inline status change with note textarea. Triggers notification job. Records timeline entry. Returns updated timeline HTML.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">ReportPreview</div>
+            <p>Live table preview as filters change. Debounce 500ms. Top 50 rows only. Export triggers server-side queue job for large datasets.</p>
+          </div>
+        </div>
+
+        <h3>Events & Jobs</h3>
+        <pre><span class="cmt">// Events fired</span>
+<span class="kw">VisitorCheckedIn</span>    → <span class="fn">SendVisitorNotification</span>, <span class="fn">NotifyDutyOfficer</span>
+<span class="kw">VisitorCheckedOut</span>   → <span class="fn">LogVisitDuration</span>, <span class="fn">TriggerFeedbackRequest</span> (if configured)
+<span class="kw">ComplaintCreated</span>    → <span class="fn">SendComplaintRegisteredSms</span>, <span class="fn">NotifyAssignedDept</span>
+<span class="kw">ComplaintAssigned</span>   → <span class="fn">SendAssignmentNotification</span>
+<span class="kw">ComplaintStatusChanged</span> → <span class="fn">SendComplaintUpdateSms</span>, <span class="fn">LogNotificationAttempt</span>
+<span class="kw">ComplaintCompleted</span>  → <span class="fn">ScheduleFeedbackRequest</span> (delayed by config hours)
+<span class="kw">SlaBreached</span>         → <span class="fn">SendEscalationAlert</span> (to dept head)</pre>
+
+        <h3>Blade component reuse</h3>
+        <pre><span class="cmt">{{-- Reuse existing --}}</span>
+@include(<span class="str">'components.status-badge'</span>, [<span class="str">'status'</span> => $complaint->status])
+@include(<span class="str">'components.avatar'</span>, [<span class="str">'name'</span> => $visitor->name])
+@include(<span class="str">'components.datatable'</span>, [<span class="str">'columns'</span> => $columns, <span class="str">'rows'</span> => $rows])
+
+<span class="cmt">{{-- New Visitor module components --}}</span>
+@include(<span class="str">'visitor.components.visit-token'</span>, [<span class="str">'token'</span> => $visit->token])
+@include(<span class="str">'visitor.components.sla-bar'</span>, [<span class="str">'percent'</span> => $slaPercent])
+@include(<span class="str">'visitor.components.timeline'</span>, [<span class="str">'events'</span> => $complaint->timeline])
+@include(<span class="str">'visitor.components.pre-reg-banner'</span>, [<span class="str">'preReg'</span> => $preReg])</pre>
+
+        <h3>Permission gates (Spatie)</h3>
+        <pre>visitor_view_dashboard
+visitor_manage_checkin
+visitor_manage_complaints
+visitor_assign_complaints
+visitor_view_reports
+visitor_export_reports
+visitor_manage_settings</pre>
+
+        <h3>Database notes</h3>
+        <div class="spec-grid">
+          <div class="spec-box">
+            <div class="spec-box-label">Key tables</div>
+            <p><code>visitors</code> · <code>visits</code> · <code>pre_registrations</code> · <code>complaints</code> · <code>complaint_timeline</code> · <code>notifications_log</code> · <code>feedback</code></p>
+            <p><code>visits.token</code>: Unique, indexed, format <code>VIS-NNNN</code>. Prefix configurable in settings.</p>
+          </div>
+          <div class="spec-box">
+            <div class="spec-box-label">Multi-tenancy</div>
+            <p>All tables include <code>tenant_id</code> (or use team scoping via <code>team_id</code> following Worksuite's existing pattern). Notifications log scoped per tenant. Reports filtered by tenant automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════ MVP ══════════════════════════════ -->
+    <div class="section" id="mvp">
+      <div class="section-head" onclick="toggle(this)">
+        <div class="section-head-left">
+          <div class="section-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+          <div>
+            <div class="section-title">H. Prioritized MVP vs Phase 2/3</div>
+            <div class="section-subtitle">What ships first and why</div>
+          </div>
+        </div>
+        <div class="section-toggle open">▾</div>
+      </div>
+      <div class="section-body open">
+        <table class="mvp-table">
+          <thead><tr><th style="width:80px">Phase</th><th>Features</th><th>Rationale</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-green">MVP</span><br/><span style="font-size:11px;color:var(--text-muted)">Phase 1</span></td>
+              <td>
+                <ul>
+                  <li>Visitor walk-in check-in/out</li>
+                  <li>Existing visitor lookup + visit history</li>
+                  <li>Visit token / QR generation</li>
+                  <li>Reason of visit (5 types)</li>
+                  <li>Complaint registration + assignment</li>
+                  <li>Complaint status tracking (5 states)</li>
+                  <li>SMS notification on check-in and complaint events</li>
+                  <li>Notification log</li>
+                  <li>Dashboard (live active visitors + complaint counts)</li>
+                </ul>
+              </td>
+              <td>Core operational loop. Reception desk can function from day 1. Complaints tracked and routed to departments. Enough for go-live.</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-purple">Phase 2</span></td>
+              <td>
+                <ul>
+                  <li>Pre-registration + VIP management</li>
+                  <li>Photo/selfie capture (camera permission flow)</li>
+                  <li>Feedback and rating collection</li>
+                  <li>WhatsApp notifications (API integration)</li>
+                  <li>Reports with CSV/Excel/PDF export</li>
+                  <li>Settings page (types, templates, SLA rules)</li>
+                  <li>Visitor profile full history view</li>
+                </ul>
+              </td>
+              <td>Adds operational polish, compliance history, and self-service admin. Delivers value to helpdesk and management layer.</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-blue">Phase 3</span></td>
+              <td>
+                <ul>
+                  <li>Kiosk / self-service mode (touchscreen visitor fills own form)</li>
+                  <li>AI-based complaint routing (NLP to auto-detect type and dept)</li>
+                  <li>Analytics dashboard with trends and charts</li>
+                  <li>Mobile app for receptionist (React Native or PWA)</li>
+                  <li>Kanban view toggle for complaints (high-volume teams)</li>
+                  <li>Public-facing complaint portal</li>
+                </ul>
+              </td>
+              <td>Advanced automation and alternative interfaces. Defer until Phase 1 + 2 adoption is proven.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout" style="margin-top:16px">
+          <strong>Estimated Phase 1 build effort</strong> (assuming existing Worksuite infrastructure): 6–8 weeks for a 2-developer team. Largest unknowns are the SMS gateway integration and the check-in stepper UI state management. Both are well-scoped above.
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:32px 0;color:var(--text-faint);font-size:12px;border-top:1px solid var(--border);margin-top:8px">
+      Visitor Module UI/UX Spec — Worksuite SaaS · Version 1.0 · Generated 9 Apr 2026<br/>
+      Visual system: Worksuite admin — loads <code>public/css/main.css</code> + vendor CSS like <code>layouts/app</code> · <code>--header_color</code> (<code>theme_css</code>) · Bootstrap body font stack · <code>.bg-additional-grey</code> (#f2f4f7) page · white cards
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+function toggle(head) {
+  const body = head.nextElementSibling;
+  const arrow = head.querySelector('.section-toggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+}
+
+function setPriority(el, label) {
+  el.closest('.pill-group').querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// Sidebar active link on scroll
+const sections = document.querySelectorAll('.section[id]');
+const links = document.querySelectorAll('.sidebar-link');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const active = document.querySelector('.sidebar-link[href="#' + entry.target.id + '"]');
+      if (active) active.classList.add('active');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '-70px 0px -60% 0px' });
+
+sections.forEach(s => observer.observe(s));
+
+// Smooth scroll for all anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Open collapsed section
+      const body = target.querySelector('.section-body');
+      const arrow = target.querySelector('.section-toggle');
+      if (body && !body.classList.contains('open')) {
+        body.classList.add('open');
+        if (arrow) arrow.classList.add('open');
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>

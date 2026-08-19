@@ -1,0 +1,12 @@
+{
+    "name": "PublicAssessmentPro",
+    "alias": "publicassessmentpro",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\PublicAssessmentPro\\Providers\\PublicAssessmentProServiceProvider"
+    ],
+    "files": [],
+    "version": "2.0.0"
+}
