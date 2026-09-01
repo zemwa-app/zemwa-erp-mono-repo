@@ -139,7 +139,7 @@
                 <span>Mobile App</span>
             </a>
         @endif
-        <p class="mb-0 text-dark-grey px-1 py-0 rounded f-10">v{{ \Illuminate\Support\Facades\File::get('version.txt') }}</p>
+        <p class="mb-0 text-dark-grey px-1 py-0 rounded f-10">v{{ app_version() }}</p>
     </div>
     <!-- Sidebar Toggler -->
 

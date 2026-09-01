@@ -199,12 +199,17 @@ class DashboardController extends AccountBaseController
                 ->count(),
         ];
 
+        $companyWithFields = 'company:id,company_name,logo,light_logo';
+        if (module_enabled('Subdomain')) {
+            $companyWithFields .= ',sub_domain';
+        }
+
         $topCompanies = (clone $paidInvoices)
             ->select('company_id', DB::raw('SUM(total) as total'))
             ->whereNotNull('company_id')
             ->groupBy('company_id')
             ->orderByDesc('total')
-            ->with('company:id,company_name')
+            ->with($companyWithFields)
             ->limit(10)
             ->get();
 
@@ -235,7 +240,7 @@ class DashboardController extends AccountBaseController
         $this->upcomingRenewals = (clone $paidInvoices)
             ->whereNotNull('next_pay_date')
             ->whereBetween('next_pay_date', [$now->copy()->startOfDay()->toDateString(), $renewalWindowEnd->toDateString()])
-            ->with('company:id,company_name')
+            ->with($companyWithFields)
             ->orderBy('next_pay_date')
             ->limit(10)
             ->get();
@@ -246,13 +251,18 @@ class DashboardController extends AccountBaseController
                     ->orWhere('status', '!=', 'active');
             })
             ->whereBetween(DB::raw('COALESCE(next_pay_date, created_at)'), [$now->copy()->startOfDay()->toDateString(), $renewalWindowEnd->toDateString()])
-            ->with(['company:id,company_name', 'currency:id,currency_symbol'])
+            ->with([$companyWithFields, 'currency:id,currency_symbol'])
             ->orderByRaw('COALESCE(next_pay_date, created_at) asc')
             ->limit(10)
             ->get();
 
+        $expiringSelect = ['id', 'company_name', 'logo', 'light_logo', 'licence_expire_on', 'package_id', 'package_type', 'status'];
+        if (module_enabled('Subdomain')) {
+            $expiringSelect[] = 'sub_domain';
+        }
+
         $this->expiringSubscriptions = Company::withoutGlobalScope(ActiveScope::class)
-            ->select('id', 'company_name', 'logo', 'light_logo', 'licence_expire_on', 'package_id', 'package_type', 'status')
+            ->select($expiringSelect)
             ->whereNotNull('licence_expire_on')
             ->whereBetween('licence_expire_on', [$now->copy()->startOfDay()->toDateString(), $renewalWindowEnd->toDateString()])
             ->with('package:id,name')

@@ -1,0 +1,12 @@
+{
+    "name": "ProductLedger",
+    "alias": "productledger",
+    "description": "Stock ledger reporting tool showing purchases, sales, and adjustments history.",
+    "keywords": [],
+    "priority": 10,
+    "providers": [
+        "Modules\\ProductLedger\\Providers\\ProductLedgerServiceProvider"
+    ],
+    "files": [],
+    "version": "1.0.0"
+}

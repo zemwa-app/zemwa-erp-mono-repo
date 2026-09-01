@@ -37,6 +37,25 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\SuperAdmin\GlobalCurrency;
 use App\Models\SuperAdmin\GlobalInvoiceSetting;
 
+if (!function_exists('app_version')) {
+    /**
+     * Return application version from root version.txt (Single Source of Truth)
+     */
+    function app_version(): string
+    {
+        static $version = null;
+
+        if ($version === null) {
+            $path = base_path('version.txt');
+            $version = \Illuminate\Support\Facades\File::exists($path)
+                ? trim(\Illuminate\Support\Facades\File::get($path))
+                : '1.0.0';
+        }
+
+        return $version;
+    }
+}
+
 if (!function_exists('user')) {
 
     /**

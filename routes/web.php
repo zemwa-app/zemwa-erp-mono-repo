@@ -979,16 +979,9 @@ Route::get('/test-broadcast', function() {
     }
 })->name('test-broadcast');
 
-// Debug broadcasting configuration 
-Route::get('/debug-broadcast', function() {
-    return response()->json([
-        'broadcast_driver' => config('broadcasting.default'),
-        'pusher_key' => config('broadcasting.connections.pusher.key'),
-        'pusher_cluster' => config('broadcasting.connections.pusher.options.host'),
-        'app_env' => config('app.env'),
-        'queue_connection' => config('queue.default')
-    ]);
-})->name('debug-broadcast');
-
+// Return application version from single source of truth
+Route::get('/version.txt', function() {
+    return response(app_version(), 200, ['Content-Type' => 'text/plain']);
+})->name('app-version');
 
 

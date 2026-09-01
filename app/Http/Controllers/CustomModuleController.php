@@ -193,10 +193,10 @@ class CustomModuleController extends AccountBaseController
         }
 
         // Check if the application version is lower than the required minimum version
-        if ($config['parent_min_version'] >= File::get('version.txt')) {
+        if ($config['parent_min_version'] > app_version()) {
             return [
                 'status' => false,
-                'message' => 'Minimum version of <b>' . $appName . ' main application</b> should be greater than or equal to <b>' . $config['parent_min_version'] . '</b>. Your application version is <b>' . File::get('version.txt') . '</b>'
+                'message' => 'Minimum version of <b>' . $appName . ' main application</b> should be greater than or equal to <b>' . $config['parent_min_version'] . '</b>. Your application version is <b>' . app_version() . '</b>'
             ];
         }
 

@@ -19,6 +19,11 @@
     <link rel='stylesheet' href="{{ asset('vendor/css/dragula.css') }}" type='text/css' />
     <link rel='stylesheet' href="{{ asset('vendor/css/drag.css') }}" type='text/css' />
 
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <title>@lang($pageTitle)</title>
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ isset($company)?$company->favicon_url:global_setting()->favicon_url }}">
@@ -41,6 +46,12 @@
     @stack('styles')
 
     <style>
+        body, .table, th, td, h1, h2, h3, h4, h5, h6, input, select, button, textarea, .dropdown-menu, .popover, .tooltip, .modal {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         :root {
             --fc-border-color: #E8EEF3;
             --fc-button-text-color: #99A5B5;

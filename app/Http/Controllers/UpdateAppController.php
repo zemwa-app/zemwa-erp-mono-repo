@@ -71,16 +71,7 @@ class UpdateAppController extends AccountBaseController
 
     public function install(Request $request)
     {
-        File::put(public_path() . '/install-version.txt', 'complete');
-
-        $filePath = $request->filePath;
-        $zip = Zip::open($filePath);
-
-        // extract whole archive
-        $zip->extract(base_path());
-
-        Artisan::call('optimize:clear');
-        Session::flush();
+        return Reply::error('System updates are disabled.');
     }
 
 }

@@ -941,13 +941,7 @@ class HomeController extends Controller
         $plugins = Module::allEnabled();
         /* @phpstan-ignore-line */
 
-        $applicationVersion = trim(
-            preg_replace(
-                '/\s\s+/',
-                ' ',
-                !file_exists(File::get(public_path() . '/version.txt')) ? File::get(public_path() . '/version.txt') : '0'
-            )
-        );
+        $applicationVersion = app_version();
         $enableModules = [];
         $enableModules['application'] = 'worksuite';
         $enableModules['version'] = $applicationVersion;

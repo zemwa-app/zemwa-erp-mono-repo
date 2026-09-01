@@ -478,6 +478,11 @@ class GlobalSetting extends BaseModel
         return asset_url_local_s3('login-background/' . $this->login_background);
     }
 
+    public function getSystemUpdateAttribute()
+    {
+        return 0; // Force system update to be disabled
+    }
+
     public function maskedDefaultLogo(): Attribute
     {
         return Attribute::make(

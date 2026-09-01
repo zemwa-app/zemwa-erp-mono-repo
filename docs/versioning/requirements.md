@@ -2,8 +2,8 @@
 
 This document outlines the versioning strategy, requirements, and baseline matrices for the core ERP system and its individual product bundles.
 
-## Consolidated Release Version: v2.0.0
-The target release for this consolidated package update is **v2.0.0**. This release represents the integration of the Pro Bundle and the route cleaning updates.
+## Consolidated Release Version: v2.2.0
+The target release for this consolidated package update is **v2.2.0**. This release represents the integration of the Pro Bundle, route cleaning updates, license verification bypasses, system update restrictions, cPanel atomic deployment architecture, dashboard query fixes, typography upgrades with the Inter font, and centralized versioning.
 
 ---
 
@@ -13,7 +13,7 @@ To manage independent module lifecycles, the system uses specific baseline versi
 
 | Component | Base Version | Notes |
 | :--- | :--- | :--- |
-| **Core System** | `v6.0.15` | The baseline web core framework version. |
+| **Core System** | `v6.2.0` | Core framework with bypassed licensing, blocked updates, deployment scripts, and Inter font overhaul. |
 | **Universal Bundle** | `v2.0.15` | Baseline version for universal features. |
 | **Pro Bundle** | *No Base Version* | Brand new release developed recently. Starting version is **v2.0.0**. |
 

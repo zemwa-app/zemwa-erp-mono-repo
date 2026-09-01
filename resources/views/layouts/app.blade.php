@@ -31,6 +31,11 @@
     <!-- Template CSS -->
     <link type="text/css" rel="stylesheet" media="all" href="{{ asset('css/main.css') }}">
 
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <title>{{ is_array(__($pageTitle)) ? $pageTitle : __($pageTitle) }}</title>
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ companyOrGlobalSetting()->favicon_url }}">
@@ -64,6 +69,34 @@
     @includeIf('aitools::includes.quill-rephrase-styles')
 
     <style>
+        body, .table, th, td, h1, h2, h3, h4, h5, h6, input, select, button, textarea, .dropdown-menu, .popover, .tooltip, .modal {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Improved Table Typography & Contrast */
+        .dataTables_wrapper .table thead th {
+            color: #475569 !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            letter-spacing: 0.01em;
+            text-transform: capitalize;
+        }
+
+        .dataTables_wrapper .table tbody td {
+            color: #1e293b;
+            font-size: 13.5px;
+            font-weight: 400;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_length label {
+            color: #64748b !important;
+            font-size: 13px !important;
+            font-weight: 500 !important;
+        }
+
         :root {
             --fc-border-color: #E8EEF3;
             --fc-button-text-color: #99A5B5;

@@ -2092,13 +2092,13 @@ class Module extends BaseModel
 
         $parentMinVersion = config(strtolower($module) . '.parent_min_version');
 
-        if ($parentMinVersion >= File::get('version.txt')) {
+        if ($parentMinVersion > app_version()) {
 
             $module = \Nwidart\Modules\Facades\Module::findOrFail(strtolower($module));
             /* @phpstan-ignore-line */
             $module->disable();
 
-            $message = 'To activate <strong>' . $module . '</strong> module, minimum version of <b>worksuite application</b> must be greater than equal to <b>' . $parentMinVersion . '</b> But your application version is <b>' . File::get('version.txt') . '</b>. Please upgrade the application to latest version';
+            $message = 'To activate <strong>' . $module . '</strong> module, minimum version of <b>worksuite application</b> must be greater than equal to <b>' . $parentMinVersion . '</b> But your application version is <b>' . app_version() . '</b>. Please upgrade the application to latest version';
             throw new \Exception($message);
         }
     }

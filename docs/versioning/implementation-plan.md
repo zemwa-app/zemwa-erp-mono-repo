@@ -1,6 +1,6 @@
 # Zemwa ERP - Versioning Implementation Plan
 
-This document details the implementation steps for executing version releases and tagging for the consolidated release **v2.0.0**, including individual tracking for sub-modules.
+This document details the implementation steps for executing version releases and tagging for the consolidated release **v2.2.0**, including individual tracking for sub-modules.
 
 ---
 
@@ -22,14 +22,14 @@ zemwa-erp-web-core/
 
 ### Step 1: Update Configuration Files
 Ensure that version strings inside configuration and composer files match the defined release numbers:
-* **Core System**: Update `composer.json` or target version constant to `6.0.15` (base).
+* **Core System**: Update `version.txt` or target version constant to `6.2.0` (base).
 * **Universal Bundle**: Ensure sub-module metadata version matches `2.0.15` (base).
 * **Pro Bundle**: Define metadata version string as `2.0.0` (baseline).
 
 ### Step 2: Tagging Strategy
 When deploying to git repositories, use the following tag formats:
-* Consolidated Release tag: `v2.0.0`
-* Core System tag: `core-v6.0.15`
+* Consolidated Release tag: `v2.2.0`
+* Core System tag: `core-v6.2.0`
 * Universal Bundle tag: `universal-v2.0.15`
 * Pro Bundle tag: `pro-v2.0.0`
 
