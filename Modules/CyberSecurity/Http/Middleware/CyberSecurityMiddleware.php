@@ -26,6 +26,8 @@ class CyberSecurityMiddleware
         if (!$cyberSecurity) {
             return $next($request);
         }
+
+        if (
             $request->email
             && $request->isMethod('post')
             && (
