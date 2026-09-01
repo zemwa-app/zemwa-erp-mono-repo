@@ -32,7 +32,6 @@ resources/lang/*
 !resources/lang/eng/
 !resources/lang/vendor/backup/eng
 !resources/lang/eng.json
-froiden-verify/
 resources/views/sections/custom_script.blade.php
 demo_db_copy.sql
 database/maxmind/

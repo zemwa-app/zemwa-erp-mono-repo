@@ -2,24 +2,42 @@
 # Enable strict error checking
 set -euo pipefail
 
+# Ensure database password variable is always cleared on exit
+trap 'unset MYSQL_PWD 2>/dev/null || true' EXIT
+
+# Runtime binaries
+PHP_BIN="/opt/cpanel/ea-php83/root/usr/bin/php"
+NODE_BIN="/opt/cpanel/ea-nodejs18/bin/node"
+NPM_BIN="/opt/cpanel/ea-nodejs18/bin/npm"
+
+# Ensure PHP binary and Node.js are available in PATH for composer and child processes
+PHP_DIR="$(dirname "${PHP_BIN}")"
+export PATH="${PHP_DIR}:/opt/cpanel/ea-nodejs18/bin:$PATH"
+
 # Configuration
-APP_NAME="zemwa-erp"
-APP_BASE="/home/zemwa/apps/${APP_NAME}"
+APP_NAME="zemwa-erp-in"
+APP_BASE="/home/mithuntc/apps/${APP_NAME}"
 REPO_DIR="${APP_BASE}/repo"
 RELEASES_DIR="${APP_BASE}/releases"
 SHARED_DIR="${APP_BASE}/shared"
 CURRENT_LINK="${APP_BASE}/current"
-BRANCH="main" # Change this to your deploy branch (e.g. "staging" or "production")
-
-# PHP binary configuration (especially for cPanel/EasyPHP paths)
-# Modify this to match the PHP version assigned to your cPanel shell/user
-PHP_BIN="/opt/cpanel/ea-php82/root/usr/bin/php"
+BRANCH="prod" # Deploying from the stable production branch
 
 LOG_DIR="${SHARED_DIR}/logs/deploy"
 TIMESTAMP="$(date +%Y%m%d%H%M%S)"
 LOG_FILE="${LOG_DIR}/deploy-${TIMESTAMP}.log"
+LOCK_FILE="${APP_BASE}/deploy.lock"
 
-# Create log directory if not exists
+# Prevent concurrent deployments using file descriptor locking
+exec 9>"${LOCK_FILE}"
+if ! flock -n 9; then
+  echo "ERROR: Another deployment is already running. Aborting."
+  exit 1
+fi
+
+# Pre-flight directory creation
+mkdir -p "${RELEASES_DIR}"
+mkdir -p "${SHARED_DIR}/backups"
 mkdir -p "${LOG_DIR}"
 
 # Redirect stdout and stderr to log file and console
@@ -33,15 +51,40 @@ echo "==> Time: ${TIMESTAMP}"
 echo "==> Log file: ${LOG_FILE}"
 echo "=================================================="
 
+echo "==> Checking runtime versions and system utilities"
+for cmd in git rsync gzip flock; do
+  command -v "$cmd" >/dev/null 2>&1 || {
+    echo "ERROR: Required system command not found: $cmd"
+    exit 1
+  }
+done
+
+[ -x "${PHP_BIN}" ] || { echo "ERROR: PHP binary not found or not executable: ${PHP_BIN}"; exit 1; }
+[ -x "${NODE_BIN}" ] || { echo "ERROR: Node binary not found or not executable: ${NODE_BIN}"; exit 1; }
+[ -x "${NPM_BIN}" ] || { echo "ERROR: NPM binary not found or not executable: ${NPM_BIN}"; exit 1; }
+
+MYSQLDUMP_BIN="$(command -v mysqldump || true)"
+[ -n "${MYSQLDUMP_BIN}" ] && [ -x "${MYSQLDUMP_BIN}" ] || { echo "ERROR: mysqldump binary not found or not executable"; exit 1; }
+
+[ -d "${REPO_DIR}/.git" ] || { echo "ERROR: Git repository missing at: ${REPO_DIR}"; exit 1; }
+
+"${PHP_BIN}" -v | head -n 1
+"${NODE_BIN}" -v
+"${NPM_BIN}" -v
+
 NEW_RELEASE="${RELEASES_DIR}/${TIMESTAMP}"
 
 echo "==> Updating repo from branch: ${BRANCH}"
-git -C "${REPO_DIR}" fetch --tags origin
+git -C "${REPO_DIR}" fetch origin "${BRANCH}" --tags
 git -C "${REPO_DIR}" checkout "${BRANCH}"
 git -C "${REPO_DIR}" reset --hard "origin/${BRANCH}"
 
-# Read version number from Laravel version.txt file
-APP_VERSION=$(cat "${REPO_DIR}/version.txt")
+if [ -f "${REPO_DIR}/version.txt" ]; then
+  APP_VERSION="$(cat "${REPO_DIR}/version.txt")"
+else
+  APP_VERSION="unknown"
+fi
+
 GIT_COMMIT=$(git -C "${REPO_DIR}" rev-parse --short HEAD)
 GIT_TAG=$(git -C "${REPO_DIR}" tag --points-at HEAD | head -n 1 || true)
 
@@ -94,17 +137,33 @@ DEPLOYED_AT=${TIMESTAMP}
 LOG_FILE=${LOG_FILE}
 EOF
 
-# Move to new release directory to run composer and npm
+# Ensure bootstrap/cache directory exists and is writable for composer package discovery
+mkdir -p "${NEW_RELEASE}/bootstrap/cache"
+chmod -R u+rwX,g+rwX "${NEW_RELEASE}/bootstrap/cache"
+
+# Move to new release directory for builds and commands
 cd "${NEW_RELEASE}"
 
-echo "==> Installing PHP Dependencies (Composer)"
-composer install --no-dev --optimize-autoloader --no-interaction
+echo "==> Installing PHP Dependencies via Composer"
+[ -f "${NEW_RELEASE}/composer.phar" ] || {
+  echo "ERROR: composer.phar not found in release: ${NEW_RELEASE}/composer.phar"
+  exit 1
+}
+
+"${PHP_BIN}" "${NEW_RELEASE}/composer.phar" install \
+  --no-dev \
+  --prefer-dist \
+  --optimize-autoloader \
+  --no-interaction
 
 echo "==> Installing Node Dependencies (NPM)"
-npm ci
+"${NPM_BIN}" ci
 
-echo "==> Building frontend assets (Laravel Mix / Vite)"
-npm run prod
+echo "==> Building frontend assets"
+"${NPM_BIN}" run prod
+
+echo "==> Removing Node build dependencies to save disk space"
+rm -rf "${NEW_RELEASE}/node_modules"
 
 echo "==> Clearing Application and Cache files"
 "${PHP_BIN}" artisan optimize:clear
@@ -128,19 +187,25 @@ DB_PASSWORD=$(clean_env_val "$(grep "^DB_PASSWORD=" "${SHARED_DIR}/.env" | cut -
 
 if [ -n "${DB_DATABASE}" ] && [ -n "${DB_USERNAME}" ]; then
   BACKUP_DIR="${SHARED_DIR}/backups"
-  mkdir -p "${BACKUP_DIR}"
   BACKUP_FILE="${BACKUP_DIR}/pre-deploy-${DB_DATABASE}-${TIMESTAMP}.sql"
   
   echo "==> Backing up database to ${BACKUP_FILE} before running migrations"
   export MYSQL_PWD="${DB_PASSWORD}"
-  if mysqldump -h "${DB_HOST}" -u "${DB_USERNAME}" --single-transaction --quick --routines --triggers --events "${DB_DATABASE}" > "${BACKUP_FILE}"; then
-    echo "==> Database backup created successfully"
-    gzip "${BACKUP_FILE}"
-    echo "==> Database backup compressed: ${BACKUP_FILE}.gz"
+  if "${MYSQLDUMP_BIN}" -h "${DB_HOST}" -u "${DB_USERNAME}" --single-transaction --quick --routines --triggers --events "${DB_DATABASE}" > "${BACKUP_FILE}"; then
+    :
   else
-    echo "ERROR: Database backup failed! Aborting deployment to protect production data."
-    exit 1
+    echo "==> Full mysqldump with routines/events failed (likely user privileges); retrying with standard triggers"
+    if ! "${MYSQLDUMP_BIN}" -h "${DB_HOST}" -u "${DB_USERNAME}" --single-transaction --quick --triggers "${DB_DATABASE}" > "${BACKUP_FILE}"; then
+      unset MYSQL_PWD
+      rm -f "${BACKUP_FILE}"
+      echo "ERROR: Database backup failed! Aborting deployment to protect production data."
+      exit 1
+    fi
   fi
+  unset MYSQL_PWD
+  echo "==> Database backup created successfully"
+  gzip -f "${BACKUP_FILE}"
+  echo "==> Database backup compressed: ${BACKUP_FILE}.gz"
 else
   echo "ERROR: Could not parse database credentials from .env. Aborting deployment."
   exit 1
@@ -149,7 +214,7 @@ fi
 echo "==> Running Database Migrations"
 "${PHP_BIN}" artisan migrate --force
 
-# Run module migrations if the command is supported
+# Run module migrations (Nwidart Laravel Modules)
 if "${PHP_BIN}" artisan list --raw | grep -q '^module:migrate'; then
   echo "==> Running Module Migrations"
   "${PHP_BIN}" artisan module:migrate --force
@@ -160,15 +225,10 @@ rm -rf "${NEW_RELEASE}/public/storage"
 ln -sfn "${SHARED_DIR}/storage/app/public" "${NEW_RELEASE}/public/storage"
 
 echo "==> Setting folder permissions"
-chmod -R 775 "${SHARED_DIR}/storage"
-chmod -R 775 "${NEW_RELEASE}/bootstrap/cache"
+chmod -R u+rwX,g+rwX "${SHARED_DIR}/storage"
+chmod -R u+rwX,g+rwX "${NEW_RELEASE}/bootstrap/cache"
 
-echo "==> Switching current release (atomic)"
-rm -f "${APP_BASE}/.current_tmp"
-ln -s "${NEW_RELEASE}" "${APP_BASE}/.current_tmp"
-mv -Tf "${APP_BASE}/.current_tmp" "${CURRENT_LINK}"
-
-# Cache config, route and views for production performance
+# Generate optimization caches BEFORE switching symlink so release is 100% warmed up
 echo "==> Generating optimization caches"
 "${PHP_BIN}" artisan config:cache
 
@@ -180,6 +240,12 @@ else
 fi
 
 "${PHP_BIN}" artisan view:cache
+
+# Atomic switch happens LAST after everything has succeeded without errors
+echo "==> Switching current release (atomic)"
+rm -f "${APP_BASE}/.current_tmp"
+ln -s "${NEW_RELEASE}" "${APP_BASE}/.current_tmp"
+mv -Tf "${APP_BASE}/.current_tmp" "${CURRENT_LINK}"
 
 echo "==> Cleaning old releases (keeping last 5)"
 cd "${RELEASES_DIR}"
