@@ -113,10 +113,10 @@ mkdir -p "${NEW_RELEASE}"
 
 echo "==> Copying source to new release"
 rsync -a --delete \
-  --exclude=".git" \
-  --exclude="node_modules" \
-  --exclude="vendor" \
-  --exclude="storage" \
+  --exclude="/.git" \
+  --exclude="/node_modules" \
+  --exclude="/vendor" \
+  --exclude="/storage" \
   "${REPO_DIR}/" "${NEW_RELEASE}/"
 
 echo "==> Linking shared .env"
