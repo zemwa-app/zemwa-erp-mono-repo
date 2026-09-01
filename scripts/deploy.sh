@@ -223,12 +223,15 @@ if "${PHP_BIN}" artisan list --raw | grep -q '^module:migrate'; then
   "${PHP_BIN}" artisan module:migrate --force
 fi
 
-echo "==> Linking Storage directory"
-rm -rf "${NEW_RELEASE}/public/storage"
+echo "==> Linking Storage and User Uploads directories"
+mkdir -p "${SHARED_DIR}/user-uploads"
+rm -rf "${NEW_RELEASE}/public/storage" "${NEW_RELEASE}/public/user-uploads"
 ln -sfn "${SHARED_DIR}/storage/app/public" "${NEW_RELEASE}/public/storage"
+ln -sfn "${SHARED_DIR}/user-uploads" "${NEW_RELEASE}/public/user-uploads"
 
 echo "==> Setting folder permissions"
 chmod -R u+rwX,g+rwX "${SHARED_DIR}/storage"
+chmod -R u+rwX,g+rwX "${SHARED_DIR}/user-uploads"
 chmod -R u+rwX,g+rwX "${NEW_RELEASE}/bootstrap/cache"
 
 # Generate optimization caches BEFORE switching symlink so release is 100% warmed up
