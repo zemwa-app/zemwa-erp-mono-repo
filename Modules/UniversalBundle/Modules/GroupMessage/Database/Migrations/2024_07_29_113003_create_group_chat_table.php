@@ -15,7 +15,7 @@ return new class extends Migration
         if (!Schema::hasTable('groups')) {
             Schema::create('groups', function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedBigInteger('company_id');
+                $table->unsignedInteger('company_id');
                 $table->foreign('company_id')->references('id')->on('companies')->onUpdate('CASCADE')->onDelete('CASCADE');
                 $table->string('name')->nullable();
                 $table->integer('owner_id')->nullable();
@@ -38,7 +38,7 @@ return new class extends Migration
         if (!Schema::hasTable('channels')) {
             Schema::create('channels', function (Blueprint $table) {
                 $table->increments('id');
-                $table->unsignedBigInteger('company_id');
+                $table->unsignedInteger('company_id');
                 $table->foreign('company_id')->references('id')->on('companies')->onUpdate('CASCADE')->onDelete('CASCADE');
                 $table->string('name');
                 $table->integer('owner_id')->nullable();
