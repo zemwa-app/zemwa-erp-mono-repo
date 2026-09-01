@@ -245,6 +245,13 @@ fi
 echo "==> Switching current release (atomic)"
 rm -f "${APP_BASE}/.current_tmp"
 ln -s "${NEW_RELEASE}" "${APP_BASE}/.current_tmp"
+
+# If 'current' is an existing physical directory (e.g. created by cPanel domain creation), remove it once
+if [ -d "${CURRENT_LINK}" ] && [ ! -L "${CURRENT_LINK}" ]; then
+  echo "==> Removing initial physical directory at ${CURRENT_LINK} to convert to symlink"
+  rm -rf "${CURRENT_LINK}"
+fi
+
 mv -Tf "${APP_BASE}/.current_tmp" "${CURRENT_LINK}"
 
 echo "==> Cleaning old releases (keeping last 5)"

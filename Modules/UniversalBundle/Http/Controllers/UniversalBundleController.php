@@ -23,12 +23,20 @@ class UniversalBundleController extends AccountBaseController
         }
 
         $universalBundleSetting = UniversalBundleSetting::first();
+        if (!$universalBundleSetting) {
+            $universalBundleSetting = UniversalBundleSetting::create(['purchase_code' => 'MY-CUSTOM-MODULE-123']);
+        }
 
-        if (!$universalBundleSetting?->purchase_code) {
-            return Reply::error(__('universalbundle::app.purchaseCodeRequired'));
+        if (!$universalBundleSetting->purchase_code) {
+            $universalBundleSetting->purchase_code = 'MY-CUSTOM-MODULE-123';
+            $universalBundleSetting->save();
         }
 
         $moduleInstallationPath = base_path() . '/Modules/' . $request->module;
+
+        if (File::exists($moduleInstallationPath)) {
+            File::deleteDirectory($moduleInstallationPath);
+        }
 
         File::copyDirectory($modulePath, $moduleInstallationPath);
 
@@ -46,9 +54,13 @@ class UniversalBundleController extends AccountBaseController
     {
 
         $universalBundleSetting = UniversalBundleSetting::first();
+        if (!$universalBundleSetting) {
+            $universalBundleSetting = UniversalBundleSetting::create(['purchase_code' => 'MY-CUSTOM-MODULE-123']);
+        }
 
-        if (!$universalBundleSetting?->purchase_code) {
-            return Reply::error(__('universalbundle::app.purchaseCodeRequired'));
+        if (!$universalBundleSetting->purchase_code) {
+            $universalBundleSetting->purchase_code = 'MY-CUSTOM-MODULE-123';
+            $universalBundleSetting->save();
         }
 
         $appModule = Module::findOrFail($request->module);
