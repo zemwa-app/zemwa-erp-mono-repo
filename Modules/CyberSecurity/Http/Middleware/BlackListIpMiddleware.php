@@ -14,9 +14,12 @@ class BlackListIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-
-        if (BlacklistIp::where('ip_address', $request->ip())->exists()) {
-            abort(403, __('cybersecurity::messages.blacklistIp'));
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('blacklist_ips') && BlacklistIp::where('ip_address', $request->ip())->exists()) {
+                abort(403, __('cybersecurity::messages.blacklistIp'));
+            }
+        } catch (\Throwable $e) {
+            // Ignore if database schema not yet ready
         }
 
         return $next($request);

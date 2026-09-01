@@ -23,7 +23,9 @@ class CyberSecurityMiddleware
     {
         $cyberSecurity = CyberSecurity::first();
 
-        if (
+        if (!$cyberSecurity) {
+            return $next($request);
+        }
             $request->email
             && $request->isMethod('post')
             && (
