@@ -211,6 +211,9 @@ else
   exit 1
 fi
 
+echo "==> Synchronizing existing database table migrations"
+"${PHP_BIN}" artisan migrations:sync-existing
+
 echo "==> Running Database Migrations"
 "${PHP_BIN}" artisan migrate --force
 

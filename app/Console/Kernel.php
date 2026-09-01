@@ -40,6 +40,7 @@ use App\Console\Commands\SendImmigrationExpiryAlert;
 use DateTimeZone;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use App\Console\Commands\SyncExistingMigrations;
 use App\Console\Commands\SuperAdmin\FreeLicenceRenew;
 use App\Console\Commands\SuperAdmin\TrialExpire;
 
@@ -54,6 +55,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
+        SyncExistingMigrations::class,
         AutoClockOut::class,
         UpdateExchangeRates::class,
         AutoStopTimer::class,
