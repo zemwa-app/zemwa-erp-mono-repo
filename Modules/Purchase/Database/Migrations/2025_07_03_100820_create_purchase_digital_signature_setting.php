@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('purchase_digital_signature_setting', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('company_id')->nullable();
+            $table->unsignedInteger('company_id')->nullable();
             $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade')->onUpdate('cascade');
             $table->string('signature')->nullable();
             $table->boolean('signature_in_vendor')->default(false);

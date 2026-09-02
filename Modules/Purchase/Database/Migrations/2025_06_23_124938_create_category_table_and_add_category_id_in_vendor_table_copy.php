@@ -15,7 +15,7 @@ return new class extends Migration
         if (!Schema::hasTable('purchase_vendor_categories')) {
             Schema::create('purchase_vendor_categories', function (Blueprint $table) {
                     $table->increments('id');
-                    $table->unsignedBigInteger('company_id')->nullable();
+                    $table->unsignedInteger('company_id')->nullable();
                     $table->foreign('company_id')->references('id')->on('companies')->onDelete('cascade')->onUpdate('cascade');
                     $table->string('category_name');
                     $table->timestamps();
