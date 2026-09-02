@@ -3,18 +3,6 @@
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 
-if(!file_exists('../.env')){
-    $GLOBALS["error_type"] = "env-missing";
-    include('error_install.php');
-    exit(1);
-}
-
-if (version_compare(PHP_VERSION, '8.2.0') < 0){
-    $GLOBALS["error_type"] = "php-version";
-    include('error_install.php');
-    exit(1);
-}
-
 define('LARAVEL_START', microtime(true));
 
 /*
