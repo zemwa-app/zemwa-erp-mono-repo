@@ -4,6 +4,7 @@ namespace Modules\ServerManager\Listeners;
 
 use App\Events\NewCompanyCreatedEvent;
 use Modules\ServerManager\Entities\ServerSetting;
+use Modules\ServerManager\Entities\ServerDomainType;
 use Modules\ServerManager\Database\Seeders\ServerProviderSeeder;
 use Modules\ServerManager\Database\Seeders\ServerTypeSeeder;
 use Modules\ServerManager\Database\Seeders\ServerHostingSeeder;
@@ -40,7 +41,11 @@ class CompanyCreatedListener
         $serverTypeSeeder = new ServerTypeSeeder();
         $serverTypeSeeder->seedServerTypesForCompany($company->id);
 
-        if (! app()->environment('codecanyon')) {
+        // Seed default domain types
+        ServerDomainType::ensureDefaultsForCompany($company->id);
+
+        // Only seed demo data in demo environment when Faker is available
+        if (app()->environment('demo') && class_exists(\Faker\Factory::class)) {
             // Seed hosting data
             $hostingSeeder = new ServerHostingSeeder();
             $hostingSeeder->run($company->id);

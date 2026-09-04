@@ -20,6 +20,10 @@ class ServerDomainSeeder extends Seeder
      */
     public function run($companyId)
     {
+        if (! class_exists(\Faker\Factory::class)) {
+            return;
+        }
+
         $faker = \Faker\Factory::create();
 
         // Get available users, projects, and clients for this company

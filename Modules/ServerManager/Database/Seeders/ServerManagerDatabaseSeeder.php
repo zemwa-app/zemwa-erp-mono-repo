@@ -23,16 +23,12 @@ class ServerManagerDatabaseSeeder extends Seeder
         // Domain Types are needed even outside demo data
         $this->call(ServerDomainTypeSeeder::class);
 
-        if (! app()->environment('codecanyon')) {
+        if (app()->environment('demo', 'local') && class_exists(\Faker\Factory::class)) {
             $companies = Company::all();
 
             foreach ($companies as $company) {
-
-                if (! App::environment('codecanyon')) {
-                    $this->call(ServerHostingSeeder::class, false, ['companyId' => $company->id]);
-                    $this->call(ServerDomainSeeder::class, false, ['companyId' => $company->id]);
-                }
-
+                $this->call(ServerHostingSeeder::class, false, ['companyId' => $company->id]);
+                $this->call(ServerDomainSeeder::class, false, ['companyId' => $company->id]);
             }
         }
 

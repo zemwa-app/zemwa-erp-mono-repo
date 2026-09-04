@@ -22,6 +22,10 @@ class ServerHostingSeeder extends Seeder
      */
     public function run($companyId)
     {
+        if (! class_exists(\Faker\Factory::class)) {
+            return;
+        }
+
         $faker = \Faker\Factory::create();
 
         // Ensure providers and server types are seeded first

@@ -10,7 +10,7 @@ use App\Models\PermissionRole;
 use App\Models\Role;
 use App\Models\User;
 use App\Models\UserPermission;
-use Modules\ServerManager\Listeners\CompanyCreatedListener;
+use Modules\ServerManager\Entities\ServerDomainType;
 
 return new class extends Migration
 {
@@ -50,7 +50,7 @@ return new class extends Migration
         foreach ($companies as $company) {
 
 
-            CompanyCreatedListener::seedInitialData($company);
+            ServerDomainType::ensureDefaultsForCompany($company->id);
 
             // Assign 'all' permission to admin role
             $adminRole = Role::where('name', 'admin')
